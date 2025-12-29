@@ -88,6 +88,11 @@ dev = [
     "black>=23.0.0",
     "flake8>=6.0.0",
 ]
+docs = [
+    "sphinx>=5.0.0",
+    "sphinx-rtd-theme>=1.2.0",
+    "myst-parser>=1.0.0",
+]
 all = [
     "orgnet[graph,ml,nlp,viz,temporal,api]",
 ]
