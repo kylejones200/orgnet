@@ -5,11 +5,11 @@ This script demonstrates how to use the ONA platform to analyze
 organizational networks from various data sources.
 """
 
-from onapy.core import OrganizationalNetworkAnalyzer
-from onapy.visualization.network import NetworkVisualizer
-from onapy.ml.embeddings import NodeEmbedder
-from onapy.ml.link_prediction import LinkPredictor
-from onapy.utils.logging import get_logger
+from orgnet.core import OrganizationalNetworkAnalyzer
+from orgnet.visualization.network import NetworkVisualizer
+from orgnet.ml.embeddings import NodeEmbedder
+from orgnet.ml.link_prediction import LinkPredictor
+from orgnet.utils.logging import get_logger
 
 logger = get_logger(__name__)
 

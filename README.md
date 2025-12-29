@@ -38,7 +38,7 @@ python -m spacy download en_core_web_sm
 ## Quick Start
 
 ```python
-from onapy.core import OrganizationalNetworkAnalyzer
+from orgnet.core import OrganizationalNetworkAnalyzer
 
 # Initialize analyzer
 analyzer = OrganizationalNetworkAnalyzer(config_path="config.yaml")
@@ -67,7 +67,7 @@ pytest
 For coverage report:
 
 ```bash
-pytest --cov=onapy --cov-report=html
+pytest --cov=orgnet --cov-report=html
 ```
 
 See [tests/README.md](tests/README.md) for more details.
@@ -77,13 +77,13 @@ See [tests/README.md](tests/README.md) for more details.
 Format code with black:
 
 ```bash
-black onapy/ tests/ example.py --line-length 100
+black orgnet/ tests/ example.py --line-length 100
 ```
 
 Check code style with flake8:
 
 ```bash
-flake8 onapy/ tests/ example.py --max-line-length=100
+flake8 orgnet/ tests/ example.py --max-line-length=100
 ```
 
 Or use the Makefile:
@@ -99,7 +99,7 @@ make check    # Format, lint, and test
 
 ```
 ONA/
-├── onapy/
+├── orgnet/
 │   ├── __init__.py
 │   ├── core.py                 # Main analyzer class
 │   ├── config.py               # Configuration management
@@ -158,7 +158,7 @@ Edit `config.yaml` to configure:
 Start the API server:
 
 ```bash
-python -m onapy.api.app
+python -m orgnet.api.app
 ```
 
 The API provides endpoints for:

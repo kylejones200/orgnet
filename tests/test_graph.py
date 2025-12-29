@@ -4,9 +4,9 @@ import pytest
 import networkx as nx
 import pandas as pd
 
-from onapy.graph.builder import GraphBuilder
-from onapy.graph.weights import EdgeWeightCalculator
-from onapy.config import Config
+from orgnet.graph.builder import GraphBuilder
+from orgnet.graph.weights import EdgeWeightCalculator
+from orgnet.config import Config
 
 
 def test_graph_builder(sample_people, sample_interactions):

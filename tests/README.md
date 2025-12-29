@@ -9,7 +9,7 @@ Lightweight test suite for the Organizational Network Analysis package.
 pytest
 
 # Run with coverage
-pytest --cov=onapy --cov-report=html
+pytest --cov=orgnet --cov-report=html
 
 # Run specific test file
 pytest tests/test_metrics.py

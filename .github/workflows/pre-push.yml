@@ -1,0 +1,77 @@
+name: Pre-Push Checks
+
+on:
+  push:
+    branches-ignore:
+      - 'dependabot/**'
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  quick-checks:
+    name: Quick Pre-Push Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install black flake8 build twine
+      
+      - name: Check code formatting
+        run: |
+          echo "Checking code formatting..."
+          black --check orgnet/ tests/ example.py setup.py --line-length 100 || {
+            echo "❌ Code formatting check failed. Run 'black orgnet/ tests/ example.py setup.py --line-length 100' to fix."
+            exit 1
+          }
+          echo "✓ Code formatting check passed"
+      
+      - name: Lint code
+        run: |
+          echo "Running linter..."
+          flake8 orgnet/ tests/ example.py setup.py --max-line-length=100 --ignore=E203,W503,E501 --count --show-source || {
+            echo "❌ Linting failed. Fix the issues above."
+            exit 1
+          }
+          echo "✓ Linting passed"
+      
+      - name: Verify package can be built
+        run: |
+          echo "Building package..."
+          python -m build || {
+            echo "❌ Package build failed. Check pyproject.toml and setup.py."
+            exit 1
+          }
+          echo "✓ Package builds successfully"
+      
+      - name: Check package with twine
+        run: |
+          echo "Checking package with twine..."
+          twine check dist/* || {
+            echo "❌ Twine check failed. Package has issues."
+            exit 1
+          }
+          echo "✓ Twine check passed"
+      
+      - name: Run tests
+        run: |
+          echo "Installing test dependencies..."
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+          echo "Running tests..."
+          pytest tests/ -v --tb=short || {
+            echo "❌ Tests failed. Fix failing tests before pushing."
+            exit 1
+          }
+          echo "✓ All tests passed"
+

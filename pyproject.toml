@@ -1,3 +1,115 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "orgnet"
+version = "0.1.0"
+description = "Organizational Network Analysis Platform using ML and Graph Analytics"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Kyle Jones"}
+]
+maintainers = [
+    {name = "Kyle Jones"}
+]
+keywords = [
+    "organizational-network-analysis",
+    "network-analysis",
+    "graph-analytics",
+    "machine-learning",
+    "social-network-analysis",
+    "organizational-behavior",
+    "collaboration-analysis",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "numpy>=1.24.0",
+    "pandas>=2.0.0",
+    "networkx>=3.1",
+    "scipy>=1.10.0",
+    "scikit-learn>=1.3.0",
+    "python-dateutil>=2.8.2",
+    "pytz>=2023.3",
+    "pyyaml>=6.0",
+    "tqdm>=4.65.0",
+    "joblib>=1.3.0",
+]
+
+[project.optional-dependencies]
+graph = [
+    "python-igraph>=0.10.0",
+    "node2vec>=0.4.6",
+]
+ml = [
+    "torch>=2.0.0",
+    "torch-geometric>=2.3.0",
+    "transformers>=4.30.0",
+    "sentence-transformers>=2.2.0",
+]
+nlp = [
+    "nltk>=3.8.1",
+    "spacy>=3.5.0",
+    "bertopic>=0.15.0",
+    "gensim>=4.3.0",
+]
+viz = [
+    "matplotlib>=3.7.0",
+    "seaborn>=0.12.0",
+    "plotly>=5.14.0",
+    "pyvis>=0.3.2",
+    "dash>=2.10.0",
+    "dash-bootstrap-components>=1.4.0",
+]
+temporal = [
+    "ruptures>=1.1.8",
+]
+api = [
+    "flask>=2.3.0",
+    "flask-cors>=4.0.0",
+    "gunicorn>=21.0.0",
+]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+]
+all = [
+    "orgnet[graph,ml,nlp,viz,temporal,api]",
+]
+
+[project.urls]
+Homepage = "https://github.com/kylejones200/orgnet"
+Documentation = "https://github.com/kylejones200/orgnet#readme"
+Repository = "https://github.com/kylejones200/orgnet"
+Issues = "https://github.com/kylejones200/orgnet/issues"
+
+[project.scripts]
+orgnet-api = "orgnet.api.app:main"
+
+[tool.setuptools]
+packages = ["orgnet", "orgnet.api", "orgnet.data", "orgnet.graph", "orgnet.insights", "orgnet.metrics", "orgnet.ml", "orgnet.nlp", "orgnet.temporal", "orgnet.utils", "orgnet.visualization"]
+
+[tool.setuptools.package-data]
+orgnet = ["py.typed"]
+
 [tool.black]
 line-length = 100
 target-version = ['py38', 'py39', 'py310', 'py311', 'py312']

@@ -1,0 +1,119 @@
+name: CI Tests and Checks
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    name: Test and Lint
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov black flake8
+      
+      - name: Check code formatting with black
+        run: |
+          black --check orgnet/ tests/ example.py setup.py --line-length 100
+      
+      - name: Lint with flake8
+        run: |
+          flake8 orgnet/ tests/ example.py setup.py --max-line-length=100 --ignore=E203,W503,E501 --count --show-source --statistics
+      
+      - name: Run tests
+        run: |
+          pytest tests/ -v --cov=orgnet --cov-report=xml --cov-report=term
+      
+      - name: Upload coverage to Codecov (optional)
+        if: matrix.python-version == '3.11'
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false
+
+  build:
+    name: Build Package
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+      
+      - name: Build package
+        run: |
+          python -m build
+      
+      - name: Check package
+        run: |
+          twine check dist/*
+      
+      - name: Verify package structure
+        run: |
+          python -c "import tarfile; tar = tarfile.open('dist/orgnet-*.tar.gz'); print('Files in source distribution:'); [print(f.name) for f in tar.getmembers() if f.isfile()][:20]"
+          python -c "import zipfile; z = zipfile.ZipFile('dist/orgnet-*.whl'); print('Files in wheel:'); [print(f) for f in z.namelist()][:20]"
+
+  import-check:
+    name: Verify Package Imports
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build
+      
+      - name: Build package
+        run: |
+          python -m build
+      
+      - name: Install built package
+        run: |
+          pip install dist/orgnet-*.whl
+      
+      - name: Test package imports
+        run: |
+          python -c "import orgnet; print('✓ orgnet imported successfully')"
+          python -c "from orgnet.core import OrganizationalNetworkAnalyzer; print('✓ OrganizationalNetworkAnalyzer imported')"
+          python -c "from orgnet.graph import GraphBuilder; print('✓ GraphBuilder imported')"
+          python -c "from orgnet.metrics import CentralityAnalyzer; print('✓ CentralityAnalyzer imported')"
+          python -c "from orgnet.api import create_app; print('✓ create_app imported')"
+          python -c "import orgnet.data; import orgnet.graph; import orgnet.metrics; import orgnet.ml; import orgnet.nlp; import orgnet.temporal; import orgnet.utils; import orgnet.visualization; print('✓ All modules imported successfully')"
+

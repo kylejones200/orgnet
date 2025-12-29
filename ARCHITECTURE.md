@@ -79,58 +79,58 @@ This document describes the architecture and design of the Organizational Networ
 
 ## Module Structure
 
-### `onapy.data`
+### `orgnet.data`
 **Purpose**: Data ingestion and processing
 
 - **`models.py`**: Data models (Person, Interaction, Meeting, Document, etc.)
 - **`ingestion.py`**: Data ingestion from various sources
 - **`processors.py`**: Data processing utilities (matrices, statistics)
 
-### `onapy.graph`
+### `orgnet.graph`
 **Purpose**: Graph construction and manipulation
 
 - **`builder.py`**: Builds organizational graphs from data
 - **`weights.py`**: Calculates edge weights with recency, reciprocity, responsiveness
 - **`temporal.py`**: Manages temporal graph snapshots
 
-### `onapy.metrics`
+### `orgnet.metrics`
 **Purpose**: Network metrics computation
 
 - **`centrality.py`**: Centrality measures (degree, betweenness, eigenvector, closeness, PageRank)
 - **`structural.py`**: Structural analysis (constraint, core-periphery, brokers)
 - **`community.py`**: Community detection (Louvain, Infomap, Label Propagation, SBM)
 
-### `onapy.ml`
+### `orgnet.ml`
 **Purpose**: Machine learning models
 
 - **`embeddings.py`**: Node embeddings (Node2Vec)
 - **`link_prediction.py`**: Link prediction models
 - **`gnn.py`**: Graph Neural Networks (GCN, GAT)
 
-### `onapy.nlp`
+### `orgnet.nlp`
 **Purpose**: Natural language processing
 
 - **`topics.py`**: Topic modeling (BERTopic, LDA)
 - **`expertise.py`**: Expertise inference from communications
 
-### `onapy.temporal`
+### `orgnet.temporal`
 **Purpose**: Temporal analysis
 
 - **`change_detection.py`**: Change point detection in network evolution
 - **`onboarding.py`**: New hire integration analysis
 
-### `onapy.visualization`
+### `orgnet.visualization`
 **Purpose**: Visualization and reporting
 
 - **`network.py`**: Network visualizations (matplotlib, Pyvis)
 - **`dashboards.py`**: Dashboard generation and executive summaries
 
-### `onapy.api`
+### `orgnet.api`
 **Purpose**: Web API interface
 
 - **`app.py`**: Flask API with REST endpoints
 
-### `onapy.core`
+### `orgnet.core`
 **Purpose**: Main orchestrator
 
 - **`core.py`**: `OrganizationalNetworkAnalyzer` - main class that coordinates all modules

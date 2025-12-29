@@ -3,9 +3,9 @@
 import pytest
 import networkx as nx
 
-from onapy.metrics.centrality import CentralityAnalyzer
-from onapy.metrics.community import CommunityDetector
-from onapy.metrics.structural import StructuralAnalyzer
+from orgnet.metrics.centrality import CentralityAnalyzer
+from orgnet.metrics.community import CommunityDetector
+from orgnet.metrics.structural import StructuralAnalyzer
 
 
 def test_centrality_analyzer(sample_graph):

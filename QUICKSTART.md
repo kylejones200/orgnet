@@ -40,7 +40,7 @@ Create CSV files in the `data/` directory following the format described in `DAT
 #### Option A: Using Python Script
 
 ```python
-from onapy.core import OrganizationalNetworkAnalyzer
+from orgnet.core import OrganizationalNetworkAnalyzer
 
 # Initialize
 analyzer = OrganizationalNetworkAnalyzer()
@@ -71,7 +71,7 @@ python example.py
 ### 3. Start API Server
 
 ```bash
-python -m onapy.api.app
+python -m orgnet.api.app
 ```
 
 The API will be available at `http://localhost:5000`

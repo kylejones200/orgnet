@@ -4,8 +4,8 @@ import pytest
 import tempfile
 import os
 
-from onapy.core import OrganizationalNetworkAnalyzer
-from onapy.config import Config
+from orgnet.core import OrganizationalNetworkAnalyzer
+from orgnet.config import Config
 
 
 def test_analyzer_initialization():
