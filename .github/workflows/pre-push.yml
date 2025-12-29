@@ -67,7 +67,7 @@ jobs:
         run: |
           echo "Installing test dependencies..."
           # Install core dependencies only (skip optional ones that may fail)
-          pip install numpy pandas networkx scipy scikit-learn pytest pytest-cov
+          pip install numpy pandas networkx scipy scikit-learn pyyaml python-dateutil pytz pytest pytest-cov
           echo "Running tests..."
           pytest tests/ -v --tb=short || {
             echo "❌ Tests failed. Fix failing tests before pushing."
