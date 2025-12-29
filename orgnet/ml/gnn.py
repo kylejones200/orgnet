@@ -1,6 +1,5 @@
 """Graph Neural Networks for organizational networks."""
 
-import numpy as np
 import networkx as nx
 from typing import Optional, Dict
 
