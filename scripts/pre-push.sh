@@ -72,6 +72,24 @@ fi
 echo ""
 echo "Running tests..."
 if [ -d "tests" ] && [ "$(ls -A tests/*.py 2>/dev/null)" ]; then
+    # Check if required dependencies are installed
+    echo "Checking test dependencies..."
+    missing_deps=()
+    for dep in pyyaml python-dateutil pytz; do
+        if ! python3 -c "import ${dep//-/_}" 2>/dev/null; then
+            missing_deps+=("$dep")
+        fi
+    done
+    
+    if [ ${#missing_deps[@]} -gt 0 ]; then
+        echo -e "${YELLOW}⚠ Missing dependencies: ${missing_deps[*]}${NC}"
+        echo "Installing missing dependencies..."
+        pip install -q ${missing_deps[*]} || {
+            echo -e "${RED}❌ Failed to install dependencies${NC}"
+            exit 1
+        }
+    fi
+    
     if pytest tests/ -v --tb=short > /dev/null 2>&1; then
         echo -e "${GREEN}✓ All tests passed${NC}"
     else
