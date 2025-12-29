@@ -1,7 +1,5 @@
 """Tests for metrics modules."""
 
-import networkx as nx
-
 from orgnet.metrics.centrality import CentralityAnalyzer
 from orgnet.metrics.community import CommunityDetector
 from orgnet.metrics.structural import StructuralAnalyzer

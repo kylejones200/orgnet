@@ -2,7 +2,7 @@
 
 import pandas as pd
 import networkx as nx
-from typing import Dict, List
+from typing import List
 
 from orgnet.metrics.centrality import CentralityAnalyzer
 

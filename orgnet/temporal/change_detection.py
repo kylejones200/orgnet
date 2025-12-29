@@ -70,7 +70,7 @@ class ChangeDetector:
             raise ValueError(f"Unknown method: {method}. Choose from {list(method_map.keys())}")
 
         change_points = detector()
-        logger.info(f"Detected {len(change_points)-1} change points using {method} method")
+        logger.info(f"Detected {len(change_points) - 1} change points using {method} method")
 
         # Convert indices to timestamps
         timestamps = data["timestamp"].values
