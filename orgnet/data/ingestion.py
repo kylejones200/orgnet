@@ -195,7 +195,7 @@ class DataIngester:
                 attendee_ids = [aid.strip() for aid in attendee_ids_raw.split(",") if aid.strip()]
             else:
                 attendee_ids = list(attendee_ids_raw) if attendee_ids_raw else []
-            
+
             meeting = Meeting(
                 id=f"meeting_{row.get('id', len(meetings))}",
                 organizer_id=str(row["organizer_id"]),
@@ -250,7 +250,7 @@ class DataIngester:
                 author_ids = [aid.strip() for aid in author_ids_raw.split(",") if aid.strip()]
             else:
                 author_ids = list(author_ids_raw) if author_ids_raw else []
-            
+
             editor_ids_raw = row.get("editor_ids", "")
             if pd.isna(editor_ids_raw) or editor_ids_raw == "":
                 editor_ids = []
@@ -310,7 +310,7 @@ class DataIngester:
                 file_paths = [fp.strip() for fp in file_paths_raw.split(",") if fp.strip()]
             else:
                 file_paths = list(file_paths_raw) if file_paths_raw else []
-            
+
             reviewer_ids_raw = row.get("reviewer_ids", "")
             if pd.isna(reviewer_ids_raw) or reviewer_ids_raw == "":
                 reviewer_ids = []
