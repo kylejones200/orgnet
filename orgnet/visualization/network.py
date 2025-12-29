@@ -2,9 +2,15 @@
 
 import networkx as nx
 import pandas as pd
-import matplotlib.pyplot as plt
 import numpy as np
 from typing import Dict, Optional
+
+try:
+    import matplotlib.pyplot as plt
+    HAS_MATPLOTLIB = True
+except ImportError:
+    HAS_MATPLOTLIB = False
+    plt = None
 
 try:
     HAS_PLOTLY = True
@@ -53,7 +59,7 @@ class NetworkVisualizer:
         centrality_df: Optional[pd.DataFrame] = None,
         title: str = "Organizational Network",
         figsize: tuple = (12, 10),
-    ) -> plt.Figure:
+    ):
         """
         Create matplotlib network visualization.
 
@@ -68,6 +74,9 @@ class NetworkVisualizer:
         Returns:
             Matplotlib figure
         """
+        if not HAS_MATPLOTLIB:
+            raise ImportError("matplotlib is required for visualization. Install with: pip install matplotlib")
+        
         if pos is None:
             pos = self.create_force_directed_layout()
 
@@ -219,7 +228,7 @@ class NetworkVisualizer:
 
     def create_adjacency_heatmap(
         self, communities: Optional[Dict] = None, output_path: Optional[str] = None
-    ) -> plt.Figure:
+    ):
         """
         Create adjacency matrix heatmap.
 

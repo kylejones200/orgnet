@@ -17,7 +17,11 @@ from orgnet.metrics.centrality import CentralityAnalyzer
 from orgnet.metrics.community import CommunityDetector
 from orgnet.metrics.structural import StructuralAnalyzer
 from orgnet.utils.logging import get_logger
-from orgnet.visualization.dashboards import DashboardGenerator
+
+try:
+    from orgnet.visualization.dashboards import DashboardGenerator
+except ImportError:
+    DashboardGenerator = None  # Optional dependency
 
 logger = get_logger(__name__)
 
