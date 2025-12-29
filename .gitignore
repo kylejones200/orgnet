@@ -34,6 +34,9 @@ ENV/
 
 # Data files (add your data files here)
 data/
+# But allow orgnet/data Python files
+!orgnet/data/*.py
+!orgnet/data/__init__.py
 *.csv
 *.json
 *.db
