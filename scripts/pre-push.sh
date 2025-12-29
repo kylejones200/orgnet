@@ -51,6 +51,14 @@ fi
 # Check if package can be built
 echo ""
 echo "Building package..."
+# Check if build module is installed
+if ! python3 -c "import build" 2>/dev/null; then
+    echo "Installing build module..."
+    pip install -q build || {
+        echo -e "${RED}❌ Failed to install build module${NC}"
+        exit 1
+    }
+fi
 if python3 -m build --wheel > /dev/null 2>&1; then
     echo -e "${GREEN}✓ Package builds successfully${NC}"
 else
