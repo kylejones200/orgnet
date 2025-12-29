@@ -25,82 +25,83 @@ except ImportError:
 if HAS_TORCH:
 
     class OrgGCN(nn.Module):
-    """Graph Convolutional Network for organizational networks."""
+        """Graph Convolutional Network for organizational networks."""
 
-    def __init__(self, in_channels: int, hidden_channels: int, out_channels: int):
-        """
-        Initialize GCN.
+        def __init__(self, in_channels: int, hidden_channels: int, out_channels: int):
+            """
+            Initialize GCN.
 
-        Args:
-            in_channels: Input feature dimension
-            hidden_channels: Hidden layer dimension
-            out_channels: Output embedding dimension
-        """
-        if not HAS_TORCH:
-            raise ImportError(
-                "PyTorch and PyTorch Geometric required. Install with: pip install torch torch-geometric"
-            )
+            Args:
+                in_channels: Input feature dimension
+                hidden_channels: Hidden layer dimension
+                out_channels: Output embedding dimension
+            """
+            if not HAS_TORCH:
+                raise ImportError(
+                    "PyTorch and PyTorch Geometric required. Install with: pip install torch torch-geometric"
+                )
 
-        super(OrgGCN, self).__init__()
-        self.conv1 = GCNConv(in_channels, hidden_channels)
-        self.conv2 = GCNConv(hidden_channels, out_channels)
+            super(OrgGCN, self).__init__()
+            self.conv1 = GCNConv(in_channels, hidden_channels)
+            self.conv2 = GCNConv(hidden_channels, out_channels)
 
-    def forward(self, x, edge_index, edge_weight=None):
-        """
-        Forward pass.
+        def forward(self, x, edge_index, edge_weight=None):
+            """
+            Forward pass.
 
-        Args:
-            x: Node features [num_nodes, in_channels]
-            edge_index: Edge connectivity [2, num_edges]
-            edge_weight: Edge weights [num_edges]
+            Args:
+                x: Node features [num_nodes, in_channels]
+                edge_index: Edge connectivity [2, num_edges]
+                edge_weight: Edge weights [num_edges]
 
-        Returns:
-            Node embeddings [num_nodes, out_channels]
-        """
-        x = self.conv1(x, edge_index, edge_weight)
-        x = F.relu(x)
-        x = self.conv2(x, edge_index, edge_weight)
-        return x
-
+            Returns:
+                Node embeddings [num_nodes, out_channels]
+            """
+            x = self.conv1(x, edge_index, edge_weight)
+            x = F.relu(x)
+            x = self.conv2(x, edge_index, edge_weight)
+            return x
 
     class OrgGAT(nn.Module):
-    """Graph Attention Network for organizational networks."""
+        """Graph Attention Network for organizational networks."""
 
-    def __init__(self, in_channels: int, hidden_channels: int, out_channels: int, heads: int = 4):
-        """
-        Initialize GAT.
+        def __init__(
+            self, in_channels: int, hidden_channels: int, out_channels: int, heads: int = 4
+        ):
+            """
+            Initialize GAT.
 
-        Args:
-            in_channels: Input feature dimension
-            hidden_channels: Hidden layer dimension
-            out_channels: Output embedding dimension
-            heads: Number of attention heads
-        """
-        if not HAS_TORCH:
-            raise ImportError(
-                "PyTorch and PyTorch Geometric required. Install with: pip install torch torch-geometric"
-            )
+            Args:
+                in_channels: Input feature dimension
+                hidden_channels: Hidden layer dimension
+                out_channels: Output embedding dimension
+                heads: Number of attention heads
+            """
+            if not HAS_TORCH:
+                raise ImportError(
+                    "PyTorch and PyTorch Geometric required. Install with: pip install torch torch-geometric"
+                )
 
-        super(OrgGAT, self).__init__()
-        self.conv1 = GATConv(in_channels, hidden_channels, heads=heads, dropout=0.1)
-        self.conv2 = GATConv(hidden_channels * heads, out_channels, heads=1, dropout=0.1)
+            super(OrgGAT, self).__init__()
+            self.conv1 = GATConv(in_channels, hidden_channels, heads=heads, dropout=0.1)
+            self.conv2 = GATConv(hidden_channels * heads, out_channels, heads=1, dropout=0.1)
 
-    def forward(self, x, edge_index, edge_weight=None):
-        """
-        Forward pass.
+        def forward(self, x, edge_index, edge_weight=None):
+            """
+            Forward pass.
 
-        Args:
-            x: Node features [num_nodes, in_channels]
-            edge_index: Edge connectivity [2, num_edges]
-            edge_weight: Edge weights [num_edges]
+            Args:
+                x: Node features [num_nodes, in_channels]
+                edge_index: Edge connectivity [2, num_edges]
+                edge_weight: Edge weights [num_edges]
 
-        Returns:
-            Node embeddings [num_nodes, out_channels]
-        """
-        x = self.conv1(x, edge_index, edge_weight)
-        x = F.relu(x)
-        x = self.conv2(x, edge_index, edge_weight)
-        return x
+            Returns:
+                Node embeddings [num_nodes, out_channels]
+            """
+            x = self.conv1(x, edge_index, edge_weight)
+            x = F.relu(x)
+            x = self.conv2(x, edge_index, edge_weight)
+            return x
 
 else:
     # Dummy classes when PyTorch is not available
@@ -133,7 +134,9 @@ def graph_to_pyg_data(graph: nx.Graph, node_features: Optional[Dict] = None):
         PyTorch Geometric Data object
     """
     if not HAS_TORCH:
-        raise ImportError("PyTorch and PyTorch Geometric required. Install with: pip install torch torch-geometric")
+        raise ImportError(
+            "PyTorch and PyTorch Geometric required. Install with: pip install torch torch-geometric"
+        )
 
     # Create node mapping
     nodes = list(graph.nodes())
