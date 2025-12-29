@@ -298,6 +298,10 @@ class OrganizationalNetworkAnalyzer:
             self.analyze()
 
         # Generate dashboard
+        if DashboardGenerator is None:
+            raise ImportError(
+                "DashboardGenerator requires visualization dependencies. Install with: pip install matplotlib"
+            )
         dashboard = DashboardGenerator(self.graph)
         executive_summary = dashboard.generate_executive_summary()
         health_metrics = dashboard.generate_health_dashboard()
