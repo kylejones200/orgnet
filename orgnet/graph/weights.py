@@ -2,8 +2,8 @@
 
 import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
-from typing import Dict, Tuple, Optional
+from datetime import datetime
+from typing import Dict, Optional
 
 from orgnet.data.models import Interaction, Meeting, Document, CodeCommit
 from orgnet.data.processors import DataProcessor

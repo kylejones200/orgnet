@@ -3,7 +3,7 @@
 import pandas as pd
 import numpy as np
 import networkx as nx
-from typing import Dict, List, Optional
+from typing import Dict, List
 from collections import defaultdict
 
 from orgnet.data.models import Person

@@ -6,8 +6,7 @@ Bridging: Connections between groups (weak ties, information flow)
 
 import networkx as nx
 import pandas as pd
-import numpy as np
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 from collections import defaultdict
 
 from orgnet.metrics.community import CommunityDetector

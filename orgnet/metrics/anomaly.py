@@ -150,7 +150,7 @@ class AnomalyDetector:
             burnout_anomalies["percentile"] = burnout_anomalies["betweenness_percentile"]
             burnout_anomalies["description"] = burnout_anomalies.apply(
                 lambda row: (
-                    f'High betweenness ({row["betweenness_percentile"]*100:.1f}th percentile) '
+                    f'High betweenness ({row["betweenness_percentile"] * 100:.1f}th percentile) '
                     f"with non-senior role - potential burnout risk"
                 ),
                 axis=1,
@@ -180,7 +180,7 @@ class AnomalyDetector:
             degree_anomalies["percentile"] = degree_anomalies["degree_percentile"]
             degree_anomalies["description"] = degree_anomalies.apply(
                 lambda row: (
-                    f'Extremely high connectivity ({row["degree_percentile"]*100:.1f}th percentile) '
+                    f'Extremely high connectivity ({row["degree_percentile"] * 100:.1f}th percentile) '
                     f"- potential overload"
                 ),
                 axis=1,
@@ -325,7 +325,7 @@ class AnomalyDetector:
         anomalies["description"] = anomalies.apply(
             lambda row: (
                 f'Sudden connectivity change: {row["prev_degree"]:.1f} -> {row["degree"]:.1f} '
-                f'({row["change_ratio"]*100:.1f}% change)'
+                f'({row["change_ratio"] * 100:.1f}% change)'
             ),
             axis=1,
         )
