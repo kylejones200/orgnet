@@ -1,8 +1,17 @@
 """Flask API application."""
 
-from flask import Flask, jsonify, request
-from flask_cors import CORS
 from typing import Optional
+
+try:
+    from flask import Flask, jsonify, request
+    from flask_cors import CORS
+    HAS_FLASK = True
+except ImportError:
+    HAS_FLASK = False
+    Flask = None
+    jsonify = None
+    request = None
+    CORS = None
 
 from orgnet.core import OrganizationalNetworkAnalyzer
 from orgnet.config import Config
@@ -21,6 +30,9 @@ def create_app(config_path: Optional[str] = None):
     Returns:
         Flask app instance
     """
+    if not HAS_FLASK:
+        raise ImportError("Flask is required for the API. Install with: pip install flask flask-cors")
+    
     app = Flask(__name__)
     CORS(app)
 
