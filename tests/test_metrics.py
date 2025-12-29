@@ -1,6 +1,5 @@
 """Tests for metrics modules."""
 
-import pytest
 import networkx as nx
 
 from orgnet.metrics.centrality import CentralityAnalyzer

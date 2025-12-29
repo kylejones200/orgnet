@@ -2,8 +2,7 @@
 
 import pandas as pd
 import networkx as nx
-from typing import Dict, List, Optional
-from datetime import datetime, timedelta
+from typing import Dict, List
 
 from orgnet.metrics.centrality import CentralityAnalyzer
 

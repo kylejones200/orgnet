@@ -1,7 +1,7 @@
 """Topic modeling for organizational communications."""
 
 import pandas as pd
-from typing import List, Dict, Optional
+from typing import List, Optional
 from datetime import datetime
 
 try:

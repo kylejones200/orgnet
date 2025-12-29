@@ -1,11 +1,6 @@
 """Tests for core analyzer functionality."""
 
-import pytest
-import tempfile
-import os
-
 from orgnet.core import OrganizationalNetworkAnalyzer
-from orgnet.config import Config
 
 
 def test_analyzer_initialization():

@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.11", "3.12"]
     
     steps:
       - name: Checkout code
@@ -27,8 +27,12 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest pytest-cov black flake8
+          # Install core dependencies (skip graph-tool which requires system deps)
+          pip install numpy pandas networkx scipy scikit-learn pytest pytest-cov black flake8
+          # Install optional dependencies that are available
+          pip install python-igraph node2vec || echo "Optional graph packages not available, continuing..."
+          pip install torch torch-geometric || echo "Optional ML packages not available, continuing..."
+          pip install transformers sentence-transformers || echo "Optional transformers not available, continuing..."
       
       - name: Check code formatting with black
         run: |

@@ -1,6 +1,5 @@
 """Tests for graph building and weights."""
 
-import pytest
 import networkx as nx
 import pandas as pd
 

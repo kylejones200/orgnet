@@ -7,7 +7,7 @@ scikit-learn>=1.3.0
 
 # Graph analysis
 python-igraph>=0.10.0
-graph-tool>=2.45
+# graph-tool>=2.45  # Optional: requires system dependencies, install separately if needed
 node2vec>=0.4.6
 
 # Machine Learning

@@ -2,7 +2,6 @@
 
 import pytest
 import networkx as nx
-import pandas as pd
 from datetime import datetime, timedelta
 
 from orgnet.data.models import Person, Interaction, InteractionType

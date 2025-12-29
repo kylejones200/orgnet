@@ -1,9 +1,8 @@
 """Change point detection for organizational networks."""
 
 import pandas as pd
-import numpy as np
 import networkx as nx
-from typing import List, Dict, Optional
+from typing import List, Dict
 from datetime import datetime
 
 from orgnet.utils.logging import get_logger

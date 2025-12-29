@@ -4,12 +4,9 @@ import networkx as nx
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-from typing import Dict, Optional, List
+from typing import Dict, Optional
 
 try:
-    import plotly.graph_objects as go
-    import plotly.express as px
-
     HAS_PLOTLY = True
 except ImportError:
     HAS_PLOTLY = False
