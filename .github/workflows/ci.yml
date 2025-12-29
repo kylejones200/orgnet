@@ -82,8 +82,8 @@ jobs:
       
       - name: Verify package structure
         run: |
-          python -c "import tarfile; tar = tarfile.open('dist/orgnet-*.tar.gz'); print('Files in source distribution:'); [print(f.name) for f in tar.getmembers() if f.isfile()][:20]"
-          python -c "import zipfile; z = zipfile.ZipFile('dist/orgnet-*.whl'); print('Files in wheel:'); [print(f) for f in z.namelist()][:20]"
+          python -c "import tarfile, glob; files = glob.glob('dist/orgnet-*.tar.gz'); tar = tarfile.open(files[0] if files else 'dist/orgnet-0.1.0.tar.gz'); print('Files in source distribution:'); [print(f.name) for f in tar.getmembers() if f.isfile()][:20]"
+          python -c "import zipfile, glob; files = glob.glob('dist/orgnet-*.whl'); z = zipfile.ZipFile(files[0] if files else 'dist/orgnet-0.1.0.whl'); print('Files in wheel:'); [print(f) for f in z.namelist()][:20]"
 
   import-check:
     name: Verify Package Imports
