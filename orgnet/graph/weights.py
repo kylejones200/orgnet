@@ -114,7 +114,7 @@ class EdgeWeightCalculator:
             DataFrame with weighted meeting matrix
         """
         coattendance = self.processor.compute_meeting_coattendance(meetings)
-        weighted = coattendance.copy()
+        weighted = coattendance.copy().astype(float)
 
         # Weight by meeting size and duration
         for meeting in meetings:

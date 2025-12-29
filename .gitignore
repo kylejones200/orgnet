@@ -39,6 +39,10 @@ data/
 *.db
 *.sqlite
 
+# Example data (generated files)
+examples/data/*.csv
+!examples/data/.gitkeep
+
 # Output files
 *.html
 *.png
@@ -48,7 +52,7 @@ outputs/
 
 # Jupyter
 .ipynb_checkpoints/
-*.ipynb
+# Note: Example notebooks in examples/ are tracked in git
 
 # Environment variables
 .env

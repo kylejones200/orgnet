@@ -56,3 +56,11 @@ pytest-cov>=4.0.0
 black>=23.0.0
 flake8>=6.0.0
 
+# Examples and Documentation
+faker>=19.0.0
+jupyter>=1.0.0
+
+# Examples
+faker>=19.0.0
+jupyter>=1.0.0
+
