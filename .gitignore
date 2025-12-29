@@ -53,6 +53,7 @@ outputs/
 # Jupyter
 .ipynb_checkpoints/
 # Note: Example notebooks in examples/ are tracked in git
+!examples/*.ipynb
 
 # Environment variables
 .env
