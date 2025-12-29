@@ -1,0 +1,97 @@
+# Organizational Network Analysis Configuration
+
+# Data Sources
+data_sources:
+  email:
+    enabled: true
+    provider: "exchange"  # exchange, gmail
+    retention_days: 90
+    
+  slack:
+    enabled: true
+    retention_days: 90
+    
+  teams:
+    enabled: true
+    retention_days: 90
+    
+  calendar:
+    enabled: true
+    retention_days: 90
+    
+  documents:
+    enabled: true
+    providers: ["sharepoint", "google_drive", "confluence"]
+    retention_days: 90
+    
+  code:
+    enabled: true
+    providers: ["github", "gitlab", "bitbucket"]
+    retention_days: 90
+    
+  hris:
+    enabled: true
+    provider: "workday"  # workday, bamboo, custom
+
+# Graph Construction
+graph:
+  # Edge weight parameters
+  recency_decay_lambda: 0.1
+  reciprocity_weight: 0.5
+  responsiveness_weight: 0.3
+  
+  # Layer fusion weights
+  layer_weights:
+    communication: 0.4
+    collaboration: 0.3
+    meeting: 0.2
+    code: 0.1
+  
+  # Temporal settings
+  snapshot_interval_days: 7
+  min_edge_weight: 0.01
+
+# Analysis Settings
+analysis:
+  # Centrality metrics
+  centrality:
+    compute_all: true
+    top_n: 20
+    
+  # Community detection
+  community:
+    method: "louvain"  # louvain, infomap, label_propagation, sbm
+    resolution: 1.0
+    
+  # NLP
+  nlp:
+    topic_model: "bertopic"  # lda, bertopic
+    num_topics: 20
+    min_topic_size: 10
+    
+  # Temporal
+  temporal:
+    change_point_method: "pelt"
+    onboarding_window_days: 90
+
+# Privacy & Ethics
+privacy:
+  anonymize_individuals: false
+  aggregate_before_storage: true
+  retention_days: 90
+  min_group_size: 5  # Don't show groups smaller than this
+
+# Visualization
+visualization:
+  max_nodes_display: 500
+  layout: "force_directed"  # force_directed, hierarchical, circular
+  color_by: "department"
+  size_by: "betweenness"
+
+# API Settings
+api:
+  host: "0.0.0.0"
+  port: 5000
+  debug: false
+  cors_enabled: true
+
