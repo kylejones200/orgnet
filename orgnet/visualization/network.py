@@ -7,6 +7,7 @@ from typing import Dict, Optional
 
 try:
     import matplotlib.pyplot as plt
+
     HAS_MATPLOTLIB = True
 except ImportError:
     HAS_MATPLOTLIB = False
@@ -75,8 +76,10 @@ class NetworkVisualizer:
             Matplotlib figure
         """
         if not HAS_MATPLOTLIB:
-            raise ImportError("matplotlib is required for visualization. Install with: pip install matplotlib")
-        
+            raise ImportError(
+                "matplotlib is required for visualization. Install with: pip install matplotlib"
+            )
+
         if pos is None:
             pos = self.create_force_directed_layout()
 
@@ -257,6 +260,9 @@ class NetworkVisualizer:
             node_order = list(self.graph.nodes())
 
         # Create heatmap
+        if not HAS_MATPLOTLIB:
+            raise ImportError("matplotlib is required for visualization. Install with: pip install matplotlib")
+        
         fig, ax = plt.subplots(figsize=(12, 10))
         im = ax.imshow(adj_matrix, cmap="viridis", aspect="auto")
 
