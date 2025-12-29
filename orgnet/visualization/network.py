@@ -261,8 +261,10 @@ class NetworkVisualizer:
 
         # Create heatmap
         if not HAS_MATPLOTLIB:
-            raise ImportError("matplotlib is required for visualization. Install with: pip install matplotlib")
-        
+            raise ImportError(
+                "matplotlib is required for visualization. Install with: pip install matplotlib"
+            )
+
         fig, ax = plt.subplots(figsize=(12, 10))
         im = ax.imshow(adj_matrix, cmap="viridis", aspect="auto")
 
