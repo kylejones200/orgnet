@@ -13,9 +13,18 @@ try:
     HAS_TORCH = True
 except ImportError:
     HAS_TORCH = False
+    # Create dummy classes for type hints when torch isn't available
+    nn = None
+    torch = None
+    F = None
+    GCNConv = None
+    GATConv = None
+    Data = None
 
 
-class OrgGCN(nn.Module):
+if HAS_TORCH:
+
+    class OrgGCN(nn.Module):
     """Graph Convolutional Network for organizational networks."""
 
     def __init__(self, in_channels: int, hidden_channels: int, out_channels: int):
@@ -54,7 +63,7 @@ class OrgGCN(nn.Module):
         return x
 
 
-class OrgGAT(nn.Module):
+    class OrgGAT(nn.Module):
     """Graph Attention Network for organizational networks."""
 
     def __init__(self, in_channels: int, hidden_channels: int, out_channels: int, heads: int = 4):
@@ -93,8 +102,26 @@ class OrgGAT(nn.Module):
         x = self.conv2(x, edge_index, edge_weight)
         return x
 
+else:
+    # Dummy classes when PyTorch is not available
+    class OrgGCN:
+        """Graph Convolutional Network for organizational networks (requires PyTorch)."""
 
-def graph_to_pyg_data(graph: nx.Graph, node_features: Optional[Dict] = None) -> "Data":
+        def __init__(self, *args, **kwargs):
+            raise ImportError(
+                "PyTorch and PyTorch Geometric required. Install with: pip install torch torch-geometric"
+            )
+
+    class OrgGAT:
+        """Graph Attention Network for organizational networks (requires PyTorch)."""
+
+        def __init__(self, *args, **kwargs):
+            raise ImportError(
+                "PyTorch and PyTorch Geometric required. Install with: pip install torch torch-geometric"
+            )
+
+
+def graph_to_pyg_data(graph: nx.Graph, node_features: Optional[Dict] = None):
     """
     Convert NetworkX graph to PyTorch Geometric Data object.
 
@@ -106,7 +133,7 @@ def graph_to_pyg_data(graph: nx.Graph, node_features: Optional[Dict] = None) -> 
         PyTorch Geometric Data object
     """
     if not HAS_TORCH:
-        raise ImportError("PyTorch and PyTorch Geometric required")
+        raise ImportError("PyTorch and PyTorch Geometric required. Install with: pip install torch torch-geometric")
 
     # Create node mapping
     nodes = list(graph.nodes())
