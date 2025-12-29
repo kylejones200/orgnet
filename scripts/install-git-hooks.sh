@@ -19,16 +19,17 @@ if [ -f "$HOOKS_DIR/pre-push" ]; then
     mv "$HOOKS_DIR/pre-push" "$HOOKS_DIR/pre-push.backup"
 fi
 
-cat > "$HOOKS_DIR/pre-push" << 'EOF'
+cat > "$HOOKS_DIR/pre-push" << EOF
 #!/bin/bash
 # Pre-push git hook
 # Runs pre-push checks before allowing push
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../scripts" && pwd)"
-if [ -f "$SCRIPT_DIR/pre-push.sh" ]; then
-    exec "$SCRIPT_DIR/pre-push.sh"
+PROJECT_ROOT="$(cd "$(dirname "\${BASH_SOURCE[0]}")/../.." && pwd)"
+PRE_PUSH_SCRIPT="\$PROJECT_ROOT/scripts/pre-push.sh"
+if [ -f "\$PRE_PUSH_SCRIPT" ]; then
+    exec "\$PRE_PUSH_SCRIPT"
 else
-    echo "⚠ Pre-push script not found at $SCRIPT_DIR/pre-push.sh"
+    echo "⚠ Pre-push script not found at \$PRE_PUSH_SCRIPT"
     echo "Skipping pre-push checks..."
     exit 0
 fi
