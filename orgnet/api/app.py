@@ -5,6 +5,7 @@ from typing import Optional
 try:
     from flask import Flask, jsonify, request
     from flask_cors import CORS
+
     HAS_FLASK = True
 except ImportError:
     HAS_FLASK = False
@@ -31,8 +32,10 @@ def create_app(config_path: Optional[str] = None):
         Flask app instance
     """
     if not HAS_FLASK:
-        raise ImportError("Flask is required for the API. Install with: pip install flask flask-cors")
-    
+        raise ImportError(
+            "Flask is required for the API. Install with: pip install flask flask-cors"
+        )
+
     app = Flask(__name__)
     CORS(app)
 

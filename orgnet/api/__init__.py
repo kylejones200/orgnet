@@ -2,6 +2,7 @@
 
 try:
     from orgnet.api.app import create_app
+
     __all__ = ["create_app"]
 except ImportError:
     # Flask is an optional dependency
