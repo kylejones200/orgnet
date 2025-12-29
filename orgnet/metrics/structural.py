@@ -2,7 +2,6 @@
 
 import networkx as nx
 import pandas as pd
-from typing import Dict
 
 from orgnet.utils.logging import get_logger
 
