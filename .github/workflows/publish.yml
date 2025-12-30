@@ -15,7 +15,7 @@ jobs:
     name: Build and publish to PyPI
     runs-on: ubuntu-latest
     environment:
-      name: pypi
+      name: release
     
     steps:
       - name: Checkout code
