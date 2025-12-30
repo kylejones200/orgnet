@@ -14,6 +14,7 @@ jobs:
   build-and-publish:
     name: Build and publish to PyPI
     runs-on: ubuntu-latest
+    environment: release  # Must match PyPI trusted publishing environment
     permissions:
       id-token: write  # Required for trusted publishing
       contents: read   # Required for checking out code
