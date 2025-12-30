@@ -14,6 +14,7 @@ jobs:
   build-and-publish:
     name: Build and publish to PyPI
     runs-on: ubuntu-latest
+    environment: release  # Must match PyPI trusted publishing environment
     permissions:
       id-token: write  # Required for trusted publishing
       contents: read   # Required for checking out code
@@ -21,6 +22,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      
+      - name: Debug OIDC Token
+        uses: github/actions-oidc-debugger@v1
       
       - name: Set up Python
         uses: actions/setup-python@v5
