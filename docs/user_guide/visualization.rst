@@ -43,3 +43,4 @@ Generate HTML reports:
 
    analyzer.generate_report("report.html")
 
+

@@ -39,3 +39,4 @@ Example
    
    analyzer.load_data(data_paths)
 
+
