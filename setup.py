@@ -14,7 +14,7 @@ except FileNotFoundError:
 
 setup(
     name="orgnet",
-    version="0.1.0",
+    version="0.1.1",
     author="Kyle Jones",
     author_email="",  # Add your email here
     description="Organizational Network Analysis Platform using ML and Graph Analytics",

@@ -1,11 +1,11 @@
 #!/bin/bash
-# Script to create GitHub release for v0.1.0
+# Script to create GitHub release for v0.1.1
 # Usage: ./create_release.sh
 
 set -e
 
-TAG="v0.1.0"
-TITLE="v0.1.0 - Initial Release"
+TAG="v0.1.1"
+TITLE="v0.1.1 - Patch Release"
 
 echo "Creating GitHub release for $TAG..."
 
