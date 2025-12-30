@@ -189,3 +189,127 @@ class TemporalGraph:
             )
 
         return pd.DataFrame(metrics)
+
+    def analyze_network_evolution(
+        self, snapshots: List[Dict], node_subset: Optional[List[str]] = None
+    ) -> Dict:
+        """
+        Analyze how network structure evolves over time (from Enron project).
+
+        Args:
+            snapshots: List of snapshot dictionaries
+            node_subset: Optional subset of nodes to track
+
+        Returns:
+            Dictionary with evolution analysis results
+        """
+        logger.info("Analyzing network evolution...")
+
+        if not snapshots:
+            return {
+                "time_periods": [],
+                "network_size_over_time": [],
+                "network_density_over_time": [],
+                "node_metrics_over_time": {},
+                "community_evolution": {},
+            }
+
+        time_periods = [s["timestamp"] for s in snapshots]
+        networks = [s["graph"] for s in snapshots]
+
+        # Track metrics over time
+        network_size_over_time = [len(G.nodes()) for G in networks]
+        network_density_over_time = []
+
+        for G in networks:
+            if isinstance(G, nx.DiGraph):
+                n = len(G)
+                if n > 1:
+                    max_edges = n * (n - 1)
+                    density = G.number_of_edges() / max_edges if max_edges > 0 else 0
+                else:
+                    density = 0.0
+            else:
+                density = nx.density(G) if len(G) > 0 else 0.0
+            network_density_over_time.append(density)
+
+        # Track node metrics over time
+        all_nodes = set()
+        for G in networks:
+            all_nodes.update(G.nodes())
+
+        if node_subset:
+            tracked_nodes = [n for n in node_subset if n in all_nodes]
+        else:
+            # Track top nodes by average degree
+            node_degrees = {}
+            for G in networks:
+                for node in G.nodes():
+                    if node not in node_degrees:
+                        node_degrees[node] = []
+                    node_degrees[node].append(G.degree(node))
+
+            import numpy as np
+
+            avg_degrees = {node: np.mean(degrees) for node, degrees in node_degrees.items()}
+            tracked_nodes = sorted(avg_degrees.items(), key=lambda x: x[1], reverse=True)[:50]
+            tracked_nodes = [node for node, _ in tracked_nodes]
+
+        node_metrics_over_time = {}
+        for node in tracked_nodes:
+            metrics = []
+            for G in networks:
+                if node in G:
+                    metrics.append(G.degree(node))
+                else:
+                    metrics.append(0.0)
+            node_metrics_over_time[node] = metrics
+
+        # Community evolution (would need community detection per period)
+        community_evolution = {}
+
+        return {
+            "time_periods": time_periods,
+            "network_size_over_time": network_size_over_time,
+            "network_density_over_time": network_density_over_time,
+            "node_metrics_over_time": node_metrics_over_time,
+            "community_evolution": community_evolution,
+        }
+
+    def detect_network_changes(
+        self, evolution_analysis: Dict, threshold: float = 0.2
+    ) -> List[Dict]:
+        """
+        Detect significant changes in network structure over time (from Enron project).
+
+        Args:
+            evolution_analysis: Results from analyze_network_evolution
+            threshold: Threshold for significant change (relative change)
+
+        Returns:
+            List of change events
+        """
+        changes = []
+
+        networks = evolution_analysis.get("network_size_over_time", [])
+        time_periods = evolution_analysis.get("time_periods", [])
+
+        for i in range(1, len(networks)):
+            prev_size = networks[i - 1]
+            curr_size = networks[i]
+
+            if prev_size > 0:
+                size_change = abs(curr_size - prev_size) / prev_size
+                if size_change > threshold:
+                    changes.append(
+                        {
+                            "period": time_periods[i] if i < len(time_periods) else None,
+                            "type": "size_change",
+                            "change": size_change,
+                            "prev_size": prev_size,
+                            "curr_size": curr_size,
+                        }
+                    )
+
+        logger.info(f"Detected {len(changes)} significant network changes")
+        return changes

@@ -5,6 +5,7 @@ data_sources:
   email:
     enabled: true
     provider: "exchange"  # exchange, gmail
+    format: "auto"  # csv, maildir, or auto (auto-detect)
     retention_days: 90
     
   slack:

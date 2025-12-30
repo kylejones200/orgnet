@@ -53,6 +53,12 @@ class CentralityAnalyzer:
         pagerank = self.compute_pagerank()
         results["pagerank"] = pagerank
 
+        # HITS (if directed graph)
+        if isinstance(self.graph, nx.DiGraph):
+            hits = self.compute_hits()
+            results["hits_authority"] = hits["authority"]
+            results["hits_hub"] = hits["hub"]
+
         return results
 
     def compute_degree_centrality(self) -> pd.DataFrame:
@@ -209,6 +215,62 @@ class CentralityAnalyzer:
 
         return df.sort_values("pagerank", ascending=False)
 
+    def compute_hits(self, max_iter: int = 100, normalized: bool = True) -> Dict[str, pd.DataFrame]:
+        """
+        Compute HITS (Hyperlink-Induced Topic Search) scores (from Enron project).
+
+        HITS identifies:
+        - Authorities: Nodes with high in-degree (many links to them)
+        - Hubs: Nodes with high out-degree (links to many authorities)
+
+        Args:
+            max_iter: Maximum iterations
+            normalized: Whether to normalize scores
+
+        Returns:
+            Dictionary with 'authority' and 'hub' DataFrames
+        """
+        if self.graph.number_of_nodes() == 0:
+            return {
+                "authority": pd.DataFrame(columns=["node_id", "authority_score"]),
+                "hub": pd.DataFrame(columns=["node_id", "hub_score"]),
+            }
+
+        # HITS requires directed graph
+        if not isinstance(self.graph, nx.DiGraph):
+            G = self.graph.to_directed()
+        else:
+            G = self.graph
+
+        try:
+            hits = nx.hits(G, max_iter=max_iter, normalized=normalized)
+            authority_scores, hub_scores = hits
+
+            logger.info(f"Computed HITS for {len(authority_scores)} nodes")
+        except Exception as e:
+            logger.warning(f"HITS computation failed: {e}, using in/out degree as fallback")
+            # Fallback: use in/out degree as proxies
+            in_degree = dict(G.in_degree())
+            out_degree = dict(G.out_degree())
+            max_in = max(in_degree.values()) if in_degree.values() else 1
+            max_out = max(out_degree.values()) if out_degree.values() else 1
+
+            authority_scores = {n: in_degree.get(n, 0) / max_in for n in G.nodes()}
+            hub_scores = {n: out_degree.get(n, 0) / max_out for n in G.nodes()}
+
+        authority_df = pd.DataFrame(
+            {
+                "node_id": list(authority_scores.keys()),
+                "authority_score": list(authority_scores.values()),
+            }
+        ).sort_values("authority_score", ascending=False)
+
+        hub_df = pd.DataFrame(
+            {"node_id": list(hub_scores.keys()), "hub_score": list(hub_scores.values())}
+        ).sort_values("hub_score", ascending=False)
+
+        return {"authority": authority_df, "hub": hub_df}
+
     def get_top_central_nodes(self, metric: str = "betweenness", top_n: int = 10) -> pd.DataFrame:
         """
         Get top central nodes by specified metric.
@@ -226,6 +288,8 @@ class CentralityAnalyzer:
             "eigenvector": (self.compute_eigenvector_centrality, "eigenvector_centrality"),
             "closeness": (self.compute_closeness_centrality, "closeness_centrality"),
             "pagerank": (self.compute_pagerank, "pagerank"),
+            "hits_authority": (lambda: self.compute_hits()["authority"], "authority_score"),
+            "hits_hub": (lambda: self.compute_hits()["hub"], "hub_score"),
         }
 
         compute_func, sort_column = metric_config.get(metric, (None, None))

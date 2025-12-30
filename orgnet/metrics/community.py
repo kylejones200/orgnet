@@ -1,7 +1,8 @@
 """Community detection algorithms."""
 
 import networkx as nx
-from typing import Dict
+import pandas as pd
+from typing import Dict, Optional
 
 try:
     import igraph as ig
@@ -15,30 +16,60 @@ try:
 except ImportError:
     nx_community = None
 
+from orgnet.utils.performance import ParquetCache
+
 
 class CommunityDetector:
     """Detects communities in organizational networks."""
 
-    def __init__(self, graph: nx.Graph):
+    def __init__(self, graph: nx.Graph, cache: Optional[ParquetCache] = None):
         """
         Initialize community detector.
 
         Args:
             graph: NetworkX graph
+            cache: Optional cache for expensive computations
         """
         self.graph = graph
+        self.cache = cache
 
-    def detect_communities(self, method: str = "louvain", resolution: float = 1.0) -> Dict:
+    def detect_communities(
+        self, method: str = "louvain", resolution: float = 1.0, random_state: Optional[int] = None
+    ) -> Dict:
         """
         Detect communities using specified method.
 
         Args:
             method: Detection method ('louvain', 'infomap', 'label_propagation', 'sbm')
             resolution: Resolution parameter (for Louvain)
+            random_state: Random seed
 
         Returns:
             Dictionary with community assignments and metrics
         """
+        cache_key = None
+        if self.cache:
+            import hashlib
+
+            graph_hash = hashlib.md5(str(sorted(self.graph.nodes())).encode()).hexdigest()
+            cache_key = f"communities_{method}_{resolution}_{random_state}_{graph_hash}"
+            cached = self.cache.get(cache_key)
+            if cached is not None:
+                try:
+                    if isinstance(cached, pd.DataFrame) and len(cached) > 0:
+                        result_dict = cached.iloc[0].to_dict()
+                        if "communities" in result_dict and isinstance(
+                            result_dict["communities"], str
+                        ):
+                            import ast
+
+                            result_dict["communities"] = ast.literal_eval(
+                                result_dict["communities"]
+                            )
+                        return result_dict
+                except Exception:
+                    pass
+
         method_map = {
             "louvain": lambda: self._louvain(resolution),
             "infomap": self._infomap,
@@ -50,7 +81,19 @@ class CommunityDetector:
         if detector is None:
             raise ValueError(f"Unknown method: {method}. Choose from {list(method_map.keys())}")
 
-        return detector()
+        result = detector()
+
+        if self.cache and cache_key:
+            try:
+                result_copy = result.copy()
+                if "communities" in result_copy:
+                    result_copy["communities"] = str(result_copy["communities"])
+                result_df = pd.DataFrame([result_copy])
+                self.cache.set(cache_key, result_df)
+            except Exception:
+                pass
+
+        return result
 
     def _louvain(self, resolution: float = 1.0) -> Dict:
         """

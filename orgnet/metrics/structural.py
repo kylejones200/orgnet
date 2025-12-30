@@ -1,9 +1,12 @@
-"""Structural analysis (holes, core-periphery)."""
+"""Structural analysis (holes, core-periphery, bridges)."""
 
 import networkx as nx
 import pandas as pd
+import numpy as np
+from typing import Dict, List, Set, Optional
 
 from orgnet.utils.logging import get_logger
+from orgnet.utils.performance import NUMBA_AVAILABLE, compute_constraint_numba
 
 logger = get_logger(__name__)
 
@@ -44,23 +47,30 @@ class StructuralAnalyzer:
                 constraint_scores[node] = 1.0
                 continue
 
-            constraint = 0.0
-            for j in neighbors:
-                p_ij = self.graph[node][j].get("weight", 1.0) / total_weight
+            if NUMBA_AVAILABLE and len(neighbors) > 10:
+                weights = np.array(
+                    [self.graph[node][n].get("weight", 1.0) for n in neighbors], dtype=np.float64
+                )
+                neighbor_indices = np.arange(len(neighbors))
+                constraint = compute_constraint_numba(neighbor_indices, weights, total_weight)
+            else:
+                constraint = 0.0
+                for j in neighbors:
+                    p_ij = self.graph[node][j].get("weight", 1.0) / total_weight
 
-                # Compute indirect constraint through k
-                indirect = 0.0
-                for k in neighbors:
-                    if k == j:
-                        continue
-                    if self.graph.has_edge(k, j):
-                        p_ik = self.graph[node][k].get("weight", 1.0) / total_weight
-                        p_kj = self.graph[k][j].get("weight", 1.0) / sum(
-                            self.graph[k][n].get("weight", 1.0) for n in self.graph.neighbors(k)
-                        )
-                        indirect += p_ik * p_kj
+                    indirect = 0.0
+                    for k in neighbors:
+                        if k == j:
+                            continue
+                        if self.graph.has_edge(k, j):
+                            p_ik = self.graph[node][k].get("weight", 1.0) / total_weight
+                            k_neighbors = list(self.graph.neighbors(k))
+                            k_total = sum(self.graph[k][n].get("weight", 1.0) for n in k_neighbors)
+                            if k_total > 0:
+                                p_kj = self.graph[k][j].get("weight", 1.0) / k_total
+                                indirect += p_ik * p_kj
 
-                constraint += (p_ij + indirect) ** 2
+                    constraint += (p_ij + indirect) ** 2
 
             constraint_scores[node] = constraint
 
@@ -144,7 +154,12 @@ class StructuralAnalyzer:
             DataFrame with broker analysis
         """
         # Merge dataframes
-        merged = betweenness_df.merge(constraint_df, on="node_id", how="inner")
+        from orgnet.utils.performance import polars_join
+
+        if len(betweenness_df) > 10000 or len(constraint_df) > 10000:
+            merged = polars_join(betweenness_df, constraint_df, on="node_id", how="inner")
+        else:
+            merged = betweenness_df.merge(constraint_df, on="node_id", how="inner")
 
         # Broker score: high betweenness, low constraint
         # Normalize both to [0, 1] and combine
@@ -180,3 +195,207 @@ class StructuralAnalyzer:
         )
 
         return df.sort_values("clustering_coefficient", ascending=False)
+
+    def detect_bridge_nodes(
+        self, communities: Optional[Dict] = None, min_betweenness: float = 0.1, method: str = "both"
+    ) -> List[str]:
+        """
+        Detect bridge nodes that connect different parts of the network (from Enron project).
+
+        Bridge nodes have high betweenness centrality and connect different communities.
+
+        Args:
+            communities: Optional community detection results from CommunityDetector
+            min_betweenness: Minimum betweenness centrality threshold
+            method: Detection method ('betweenness', 'community_cut', 'both')
+
+        Returns:
+            List of bridge node identifiers
+        """
+        logger.info("Detecting bridge nodes...")
+
+        bridge_nodes = []
+
+        if method in ["betweenness", "both"]:
+            # Method 1: High betweenness centrality
+            try:
+                if len(self.graph) > 500:
+                    betweenness = nx.betweenness_centrality(
+                        self.graph, k=min(500, len(self.graph)), normalized=True, seed=42
+                    )
+                else:
+                    betweenness = nx.betweenness_centrality(self.graph, normalized=True)
+
+                # Nodes with high betweenness are potential bridges
+                max_betweenness = max(betweenness.values()) if betweenness.values() else 0
+                threshold = max_betweenness * min_betweenness
+
+                betweenness_bridges = [
+                    node for node, score in betweenness.items() if score >= threshold
+                ]
+
+                bridge_nodes.extend(betweenness_bridges)
+                logger.info(
+                    f"Found {len(betweenness_bridges)} bridge nodes by betweenness centrality"
+                )
+            except Exception as e:
+                logger.warning(f"Betweenness-based bridge detection failed: {e}")
+
+        if method in ["community_cut", "both"] and communities:
+            # Method 2: Nodes connecting different communities
+            community_bridges = self._find_inter_community_bridges(communities)
+            bridge_nodes.extend(community_bridges)
+            logger.info(f"Found {len(community_bridges)} bridge nodes connecting communities")
+
+        # Remove duplicates
+        bridge_nodes = list(set(bridge_nodes))
+
+        logger.info(f"Total unique bridge nodes: {len(bridge_nodes)}")
+        return bridge_nodes
+
+    def _find_inter_community_bridges(self, communities: Dict) -> List[str]:
+        """
+        Find nodes that connect different communities.
+
+        Args:
+            communities: Community detection results with 'communities' key
+
+        Returns:
+            List of bridge nodes connecting communities
+        """
+        bridge_nodes = []
+
+        comm_list = communities.get("communities", [])
+        if not comm_list:
+            return bridge_nodes
+
+        # Build community membership map
+        node_to_community = {}
+        for comm_id, nodes in enumerate(comm_list):
+            for node in nodes:
+                node_to_community[node] = comm_id
+
+        # Find nodes with neighbors in different communities
+        for node in self.graph.nodes():
+            if node not in node_to_community:
+                continue
+
+            node_community = node_to_community[node]
+            neighbor_communities = set()
+
+            for neighbor in self.graph.neighbors(node):
+                if neighbor in node_to_community:
+                    neighbor_communities.add(node_to_community[neighbor])
+
+            # If node has neighbors in different communities, it's a bridge
+            if len(neighbor_communities) > 1:
+                bridge_nodes.append(node)
+
+        return bridge_nodes
+
+    def analyze_bridge_structure(self, communities: Optional[Dict] = None) -> Dict:
+        """
+        Comprehensive bridge node analysis (from Enron project).
+
+        Args:
+            communities: Optional community detection results
+
+        Returns:
+            Dictionary with bridge analysis results
+        """
+        logger.info("Analyzing bridge structure...")
+
+        # Detect communities if not provided
+        if communities is None:
+            from orgnet.metrics.community import CommunityDetector
+
+            detector = CommunityDetector(self.graph)
+            communities = detector.detect_communities(method="louvain")
+
+        # Detect bridge nodes
+        bridge_nodes = self.detect_bridge_nodes(communities, method="both")
+
+        # Compute bridge scores (betweenness centrality)
+        try:
+            if len(self.graph) > 500:
+                betweenness = nx.betweenness_centrality(
+                    self.graph, k=min(500, len(self.graph)), normalized=True, seed=42
+                )
+            else:
+                betweenness = nx.betweenness_centrality(self.graph, normalized=True)
+
+            bridge_scores = {node: betweenness.get(node, 0.0) for node in bridge_nodes}
+        except Exception:
+            bridge_scores = {node: 1.0 for node in bridge_nodes}
+
+        # Find which communities each bridge connects
+        comm_list = communities.get("communities", [])
+        node_to_community = {}
+        for comm_id, comm_nodes in enumerate(comm_list):
+            for node in comm_nodes:
+                node_to_community[node] = comm_id
+
+        inter_community_bridges = {}
+        for bridge in bridge_nodes:
+            if bridge not in node_to_community:
+                continue
+
+            connected_communities = set([node_to_community[bridge]])
+
+            for neighbor in self.graph.neighbors(bridge):
+                if neighbor in node_to_community:
+                    connected_communities.add(node_to_community[neighbor])
+
+            if len(connected_communities) > 1:
+                inter_community_bridges[bridge] = list(connected_communities)
+
+        # Find isolated nodes
+        isolated_nodes = [node for node in self.graph.nodes() if self.graph.degree(node) == 0]
+
+        return {
+            "bridge_nodes": bridge_nodes,
+            "bridge_scores": bridge_scores,
+            "inter_community_bridges": inter_community_bridges,
+            "isolated_nodes": isolated_nodes,
+        }
+
+    def identify_critical_bridges(
+        self,
+        bridge_analysis: Optional[Dict] = None,
+        communities: Optional[Dict] = None,
+        top_n: int = 10,
+    ) -> List[tuple]:
+        """
+        Identify the most critical bridge nodes (from Enron project).
+
+        Critical bridges:
+        - High bridge scores (betweenness)
+        - Connect many communities
+        - High degree centrality
+
+        Args:
+            bridge_analysis: Optional bridge analysis results
+            communities: Optional community detection results
+            top_n: Number of top bridges to return
+
+        Returns:
+            List of (node, score, n_communities, communities) tuples
+        """
+        if bridge_analysis is None:
+            bridge_analysis = self.analyze_bridge_structure(communities)
+
+        bridge_info = []
+
+        for bridge in bridge_analysis["bridge_nodes"]:
+            score = bridge_analysis["bridge_scores"].get(bridge, 0.0)
+            communities_list = bridge_analysis["inter_community_bridges"].get(bridge, [])
+
+            # Composite score: bridge score * number of communities connected
+            composite_score = score * (1 + len(communities_list))
+
+            bridge_info.append((bridge, composite_score, len(communities_list), communities_list))
+
+        # Sort by composite score
+        bridge_info.sort(key=lambda x: x[1], reverse=True)
+
+        return bridge_info[:top_n]

@@ -17,6 +17,7 @@ from orgnet.metrics.centrality import CentralityAnalyzer
 from orgnet.metrics.community import CommunityDetector
 from orgnet.metrics.structural import StructuralAnalyzer
 from orgnet.utils.logging import get_logger
+from orgnet.utils.performance import ParquetCache
 
 try:
     from orgnet.visualization.dashboards import DashboardGenerator
@@ -29,16 +30,18 @@ logger = get_logger(__name__)
 class OrganizationalNetworkAnalyzer:
     """Main class for organizational network analysis."""
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: Optional[str] = None, cache_dir: Optional[str] = None):
         """
         Initialize ONA analyzer.
 
         Args:
             config_path: Path to configuration file
+            cache_dir: Directory for caching (default: .cache/orgnet)
         """
         self.config = Config(config_path)
         self.data_ingester = DataIngester(self.config)
         self.graph_builder = GraphBuilder(self.config)
+        self.cache = ParquetCache(cache_dir or ".cache/orgnet")
 
         # Data storage
         self.people: List = []
@@ -57,13 +60,28 @@ class OrganizationalNetworkAnalyzer:
         self.structural_results: Optional[Dict] = None
         self.community_results: Optional[Dict] = None
 
-    def load_data(self, data_paths: Optional[Dict[str, str]] = None):
+    def load_data(
+        self,
+        data_paths: Optional[Dict[str, str]] = None,
+        email_format: Optional[str] = None,
+        email_max_rows: Optional[int] = None,
+        email_sample_size: Optional[int] = None,
+        email_user_filter: Optional[List[str]] = None,
+        email_folder_filter: Optional[List[str]] = None,
+        email_to_person_map: Optional[Dict[str, str]] = None,
+    ):
         """
         Load data from various sources.
 
         Args:
             data_paths: Dictionary mapping source name to file path
                        Keys: 'email', 'slack', 'calendar', 'documents', 'code', 'hris'
+            email_format: Email format ('csv', 'maildir', or 'auto')
+            email_max_rows: Maximum number of emails to load (maildir only)
+            email_sample_size: Random sample size (maildir only)
+            email_user_filter: Optional list of user folders to include (maildir only)
+            email_folder_filter: Optional list of folder types to include (maildir only)
+            email_to_person_map: Optional mapping from email addresses to person IDs
         """
         if data_paths is None:
             data_paths = {}
@@ -76,7 +94,15 @@ class OrganizationalNetworkAnalyzer:
         # Load other data sources using loop for cleaner code
         source_loaders = {
             "email": lambda path: self.interactions.extend(
-                self.data_ingester.ingest_email(data_path=path)
+                self.data_ingester.ingest_email(
+                    data_path=path,
+                    data_format=email_format,
+                    max_rows=email_max_rows,
+                    sample_size=email_sample_size,
+                    user_filter=email_user_filter,
+                    folder_filter=email_folder_filter,
+                    email_to_person_map=email_to_person_map,
+                )
             ),
             "slack": lambda path: self.interactions.extend(
                 self.data_ingester.ingest_slack(data_path=path)
@@ -139,7 +165,7 @@ class OrganizationalNetworkAnalyzer:
         results["core_periphery"] = structural_analyzer.compute_core_periphery()
 
         # Community detection
-        community_detector = CommunityDetector(self.graph)
+        community_detector = CommunityDetector(self.graph, cache=self.cache)
         method = self.config.analysis_config.get("community", {}).get("method", "louvain")
         resolution = self.config.analysis_config.get("community", {}).get("resolution", 1.0)
         self.community_results = community_detector.detect_communities(

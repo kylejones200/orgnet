@@ -135,12 +135,16 @@ class NodeEmbedder:
         other_indices = [self.node_to_index[n] for n in other_nodes]
         other_embeddings = self.embeddings[other_indices]
 
-        # Vectorized cosine similarity
-        node_norm = np.linalg.norm(node_embedding)
-        other_norms = np.linalg.norm(other_embeddings, axis=1)
-        similarities_vec = np.dot(other_embeddings, node_embedding) / (
-            node_norm * other_norms + 1e-10
-        )
+        from orgnet.utils.performance import NUMBA_AVAILABLE, cosine_similarity_batch
+
+        if NUMBA_AVAILABLE and len(other_embeddings) > 100:
+            similarities_vec = cosine_similarity_batch(other_embeddings, node_embedding)
+        else:
+            node_norm = np.linalg.norm(node_embedding)
+            other_norms = np.linalg.norm(other_embeddings, axis=1)
+            similarities_vec = np.dot(other_embeddings, node_embedding) / (
+                node_norm * other_norms + 1e-10
+            )
 
         # Get top k using argpartition for efficiency
         top_k_indices = np.argpartition(similarities_vec, -top_k)[-top_k:]

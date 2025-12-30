@@ -1,8 +1,12 @@
 """Data ingestion from various sources."""
 
 import pandas as pd
+import email
+from email.utils import parsedate_to_datetime, parseaddr
+from pathlib import Path
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import List, Optional, Dict
+import random
 
 from orgnet.data.models import (
     Person,
@@ -43,15 +47,283 @@ class DataIngester:
 
         return min(retention_days) if retention_days else 90
 
-    def ingest_email(
-        self, data_path: Optional[str] = None, data: Optional[pd.DataFrame] = None
-    ) -> List[Interaction]:
+    def _detect_email_format(self, data_path: str) -> str:
         """
-        Ingest email data.
+        Detect email data format (CSV or maildir).
 
         Args:
-            data_path: Path to CSV file with email data
+            data_path: Path to email data
+
+        Returns:
+            Format string: 'csv' or 'maildir'
+        """
+        path = Path(data_path)
+
+        # Check if it's a directory (maildir) or file (CSV)
+        if path.is_dir():
+            # Check for maildir structure (has cur/, new/, tmp/ subdirectories)
+            if any((path / subdir).exists() for subdir in ["cur", "new", "tmp"]):
+                return "maildir"
+            # Otherwise assume it's a maildir with user folders
+            return "maildir"
+        elif path.is_file() and path.suffix.lower() == ".csv":
+            return "csv"
+        else:
+            # Default to CSV for backward compatibility
+            logger.warning(f"Could not detect format for {data_path}, defaulting to CSV")
+            return "csv"
+
+    def _parse_maildir_email(self, email_path: Path, email_id: str) -> Optional[Dict]:
+        """
+        Parse a single email file from maildir format.
+
+        Args:
+            email_path: Path to email file
+            email_id: Unique identifier for this email
+
+        Returns:
+            Dictionary with email data or None if parsing fails
+        """
+        try:
+            with open(email_path, "rb") as f:
+                msg = email.message_from_bytes(f.read())
+
+            # Extract headers
+            from_addr = parseaddr(msg.get("From", ""))[1]
+            to_addrs = [parseaddr(addr)[1] for addr in msg.get_all("To", [])]
+            cc_addrs = [parseaddr(addr)[1] for addr in msg.get_all("Cc", [])]
+            bcc_addrs = [parseaddr(addr)[1] for addr in msg.get_all("Bcc", [])]
+
+            # Get date
+            date_str = msg.get("Date")
+            if date_str:
+                try:
+                    timestamp = parsedate_to_datetime(date_str)
+                except (ValueError, TypeError):
+                    timestamp = datetime.fromtimestamp(email_path.stat().st_mtime)
+            else:
+                timestamp = datetime.fromtimestamp(email_path.stat().st_mtime)
+
+            # Get subject
+            subject = msg.get("Subject", "")
+
+            # Get message ID for threading
+            message_id = msg.get("Message-ID", "")
+            in_reply_to = msg.get("In-Reply-To", "")
+            references = msg.get("References", "")
+
+            # Extract body (text/plain preferred, fallback to text/html)
+            body = ""
+            if msg.is_multipart():
+                for part in msg.walk():
+                    content_type = part.get_content_type()
+                    if content_type == "text/plain":
+                        try:
+                            body = part.get_payload(decode=True).decode("utf-8", errors="ignore")
+                            break
+                        except Exception:
+                            pass
+                    elif content_type == "text/html" and not body:
+                        try:
+                            body = part.get_payload(decode=True).decode("utf-8", errors="ignore")
+                        except Exception:
+                            pass
+            else:
+                try:
+                    body = msg.get_payload(decode=True).decode("utf-8", errors="ignore")
+                except Exception:
+                    pass
+
+            # Check for attachments
+            has_attachment = any(
+                part.get_content_disposition() == "attachment"
+                for part in msg.walk()
+                if msg.is_multipart()
+            )
+
+            return {
+                "id": email_id,
+                "from": from_addr,
+                "to": to_addrs,
+                "cc": cc_addrs,
+                "bcc": bcc_addrs,
+                "timestamp": timestamp,
+                "subject": subject,
+                "body": body,
+                "message_id": message_id,
+                "in_reply_to": in_reply_to,
+                "references": references,
+                "has_attachment": has_attachment,
+            }
+        except Exception as e:
+            logger.warning(f"Failed to parse email {email_path}: {e}")
+            return None
+
+    def _load_maildir(
+        self,
+        maildir_path: str,
+        max_rows: Optional[int] = None,
+        sample_size: Optional[int] = None,
+        user_filter: Optional[List[str]] = None,
+        folder_filter: Optional[List[str]] = None,
+    ) -> pd.DataFrame:
+        """
+        Load emails from maildir format (Enron-style).
+
+        Args:
+            maildir_path: Path to maildir directory
+            max_rows: Maximum number of emails to load
+            sample_size: Random sample size (if None, loads all)
+            user_filter: Optional list of user folders to include
+            folder_filter: Optional list of folder types to include (e.g., ['sent', 'inbox'])
+
+        Returns:
+            DataFrame with email data
+        """
+        maildir = Path(maildir_path)
+        if not maildir.exists():
+            raise ValueError(f"Maildir path does not exist: {maildir_path}")
+
+        logger.info(f"Loading emails from maildir: {maildir_path}")
+
+        emails = []
+        email_count = 0
+
+        # Enron maildir structure: maildir/user-folder/cur/ or maildir/user-folder/new/
+        # Also supports: maildir/cur/ and maildir/new/ (single user)
+
+        # Find all email files
+        email_files = []
+
+        if (maildir / "cur").exists() or (maildir / "new").exists():
+            # Single user maildir
+            for subdir in ["cur", "new"]:
+                subdir_path = maildir / subdir
+                if subdir_path.exists():
+                    email_files.extend(subdir_path.glob("*"))
+        else:
+            # Multi-user maildir (Enron style)
+            for user_folder in maildir.iterdir():
+                if not user_folder.is_dir():
+                    continue
+
+                if user_filter and user_folder.name not in user_filter:
+                    continue
+
+                # Check subdirectories (cur, new, or direct folders like 'sent', 'inbox')
+                for subdir in ["cur", "new"]:
+                    subdir_path = user_folder / subdir
+                    if subdir_path.exists():
+                        email_files.extend(subdir_path.glob("*"))
+
+                # Also check for direct folder structure (sent, inbox, etc.)
+                for folder in user_folder.iterdir():
+                    if folder.is_dir() and folder.name not in ["cur", "new", "tmp"]:
+                        if folder_filter and folder.name not in folder_filter:
+                            continue
+                        for subdir in ["cur", "new"]:
+                            subdir_path = folder / subdir
+                            if subdir_path.exists():
+                                email_files.extend(subdir_path.glob("*"))
+
+        # Filter out directories
+        email_files = [f for f in email_files if f.is_file()]
+
+        logger.info(f"Found {len(email_files)} email files")
+
+        # Apply sampling if requested
+        if sample_size and len(email_files) > sample_size:
+            email_files = random.sample(email_files, sample_size)
+            logger.info(f"Sampled {sample_size} emails")
+
+        # Apply max_rows limit
+        if max_rows:
+            email_files = email_files[:max_rows]
+
+        from orgnet.utils.performance import parallel_map
+
+        def parse_email_wrapper(email_file):
+            email_id = f"email_{len(emails)}"
+            return self._parse_maildir_email(email_file, email_id)
+
+        if len(email_files) > 100:
+            parsed_results = parallel_map(parse_email_wrapper, email_files, n_jobs=-1)
+            emails.extend([p for p in parsed_results if p is not None])
+            email_count = len(emails)
+        else:
+            for email_file in email_files:
+                email_id = f"email_{email_count}"
+                parsed = self._parse_maildir_email(email_file, email_id)
+                if parsed:
+                    emails.append(parsed)
+                    email_count += 1
+
+                if max_rows and email_count >= max_rows:
+                    break
+
+        if not emails:
+            logger.warning("No emails parsed from maildir")
+            return pd.DataFrame()
+
+        # Convert to DataFrame
+        df = pd.DataFrame(emails)
+
+        # Expand 'to' list into multiple rows (one per recipient)
+        rows = []
+        for _, email_row in df.iterrows():
+            from_addr = email_row["from"]
+            to_addrs = email_row["to"] if isinstance(email_row["to"], list) else []
+
+            if not to_addrs:
+                # No recipients, skip
+                continue
+
+            for to_addr in to_addrs:
+                rows.append(
+                    {
+                        "id": email_row["id"],
+                        "sender": from_addr,
+                        "recipient": to_addr,
+                        "timestamp": email_row["timestamp"],
+                        "subject": email_row["subject"],
+                        "cc": email_row.get("cc", []),
+                        "bcc": email_row.get("bcc", []),
+                        "has_attachment": email_row.get("has_attachment", False),
+                        "message_id": email_row.get("message_id", ""),
+                        "in_reply_to": email_row.get("in_reply_to", ""),
+                        "references": email_row.get("references", ""),
+                        "body": email_row.get("body", ""),
+                    }
+                )
+
+        df_expanded = pd.DataFrame(rows)
+        logger.info(f"Loaded {len(df_expanded)} email interactions from {len(emails)} emails")
+
+        return df_expanded
+
+    def ingest_email(
+        self,
+        data_path: Optional[str] = None,
+        data: Optional[pd.DataFrame] = None,
+        data_format: Optional[str] = None,
+        max_rows: Optional[int] = None,
+        sample_size: Optional[int] = None,
+        user_filter: Optional[List[str]] = None,
+        folder_filter: Optional[List[str]] = None,
+        email_to_person_map: Optional[Dict[str, str]] = None,
+    ) -> List[Interaction]:
+        """
+        Ingest email data from CSV or maildir format.
+
+        Args:
+            data_path: Path to CSV file or maildir directory with email data
             data: DataFrame with email data (columns: sender, recipient, timestamp, etc.)
+            data_format: Format type ('csv', 'maildir', or 'auto' for auto-detection)
+            max_rows: Maximum number of emails to load (maildir only)
+            sample_size: Random sample size (maildir only)
+            user_filter: Optional list of user folders to include (maildir only)
+            folder_filter: Optional list of folder types to include (maildir only)
+            email_to_person_map: Optional mapping from email addresses to person IDs
 
         Returns:
             List of Interaction objects
@@ -62,39 +334,88 @@ class DataIngester:
         if data is None:
             if data_path is None:
                 raise ValueError("Either data_path or data must be provided")
-            data = pd.read_csv(data_path)
+
+            # Detect format if not specified
+            if data_format is None or data_format == "auto":
+                data_format = self._detect_email_format(data_path)
+
+            # Load data based on format
+            if data_format == "maildir":
+                data = self._load_maildir(
+                    data_path,
+                    max_rows=max_rows,
+                    sample_size=sample_size,
+                    user_filter=user_filter,
+                    folder_filter=folder_filter,
+                )
+
+                # Map email addresses to person IDs if mapping provided
+                if email_to_person_map:
+                    data["sender_id"] = data["sender"].map(email_to_person_map)
+                    data["recipient_id"] = data["recipient"].map(email_to_person_map)
+                else:
+                    # Use email addresses as IDs if no mapping provided
+                    data["sender_id"] = data["sender"]
+                    data["recipient_id"] = data["recipient"]
+            else:
+                # CSV format
+                data = pd.read_csv(data_path)
 
         interactions = []
         cutoff_date = datetime.now() - timedelta(days=self.retention_days)
 
         for _, row in data.iterrows():
-            timestamp = pd.to_datetime(row["timestamp"])
-            if timestamp < cutoff_date:
+            timestamp = pd.to_datetime(row["timestamp"], errors="coerce")
+            if pd.isna(timestamp) or timestamp < cutoff_date:
                 continue
 
-            # Skip rows with missing source or target
-            sender_id = row["sender_id"]
-            recipient_id = row["recipient_id"]
-            if pd.isna(sender_id) or pd.isna(recipient_id):
+            # Get sender and recipient IDs
+            # Support both 'sender_id'/'recipient_id' (CSV) and 'sender'/'recipient' (maildir)
+            sender_id = row.get("sender_id") or row.get("sender")
+            recipient_id = row.get("recipient_id") or row.get("recipient")
+
+            if pd.isna(sender_id) or pd.isna(recipient_id) or not sender_id or not recipient_id:
                 continue
+
+            # Extract CC/BCC lists
+            cc_list = row.get("cc", [])
+            if isinstance(cc_list, str):
+                cc_list = [c.strip() for c in cc_list.split(",") if c.strip()]
+            elif not isinstance(cc_list, list):
+                cc_list = []
+
+            bcc_list = row.get("bcc", [])
+            if isinstance(bcc_list, str):
+                bcc_list = [c.strip() for c in bcc_list.split(",") if c.strip()]
+            elif not isinstance(bcc_list, list):
+                bcc_list = []
 
             interaction = Interaction(
-                id=f"email_{row.get('id', len(interactions))}",
+                id=str(row.get("id", f"email_{len(interactions)}")),
                 source_id=str(sender_id),
                 target_id=str(recipient_id),
                 interaction_type=InteractionType.EMAIL,
                 timestamp=timestamp,
                 channel=row.get("subject", None),
-                response_time_seconds=row.get("response_time_seconds") if not pd.isna(row.get("response_time_seconds")) else None,
+                response_time_seconds=(
+                    row.get("response_time_seconds")
+                    if not pd.isna(row.get("response_time_seconds"))
+                    else None
+                ),
                 is_reciprocal=row.get("is_reciprocal", False),
+                content=row.get("body", None),  # Store email body if available
                 metadata={
-                    "cc": row.get("cc", []),
-                    "bcc": row.get("bcc", []),
+                    "cc": cc_list,
+                    "bcc": bcc_list,
                     "has_attachment": row.get("has_attachment", False),
+                    "message_id": row.get("message_id", ""),
+                    "in_reply_to": row.get("in_reply_to", ""),
+                    "references": row.get("references", ""),
                 },
             )
             interactions.append(interaction)
 
+        logger.info(f"Ingested {len(interactions)} email interactions")
         return interactions
 
     def ingest_slack(
@@ -145,7 +466,11 @@ class DataIngester:
                 timestamp=timestamp,
                 channel=row.get("channel", None),
                 thread_id=row.get("thread_ts", None),
-                response_time_seconds=row.get("response_time_seconds") if not pd.isna(row.get("response_time_seconds")) else None,
+                response_time_seconds=(
+                    row.get("response_time_seconds")
+                    if not pd.isna(row.get("response_time_seconds"))
+                    else None
+                ),
                 metadata={
                     "is_dm": row.get("is_dm", False),
                     "has_reaction": row.get("has_reaction", False),
