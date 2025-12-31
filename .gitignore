@@ -77,3 +77,6 @@ logs/
 *.pth
 models/
 
+# WIP folder
+wip/
+
