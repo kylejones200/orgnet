@@ -3,7 +3,6 @@
 import networkx as nx
 from typing import List, Set, Dict, Optional
 from dataclasses import dataclass
-from collections import Counter
 
 from orgnet.utils.logging import get_logger
 from orgnet.data.models import Interaction

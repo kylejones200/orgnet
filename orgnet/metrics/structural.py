@@ -3,7 +3,7 @@
 import networkx as nx
 import pandas as pd
 import numpy as np
-from typing import Dict, List, Set, Optional
+from typing import Dict, List, Optional
 
 from orgnet.utils.logging import get_logger
 from orgnet.utils.performance import NUMBA_AVAILABLE, compute_constraint_numba
@@ -280,7 +280,6 @@ class StructuralAnalyzer:
             if node not in node_to_community:
                 continue
 
-            node_community = node_to_community[node]
             neighbor_communities = set()
 
             for neighbor in self.graph.neighbors(node):

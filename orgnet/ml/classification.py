@@ -1,10 +1,8 @@
 """Email classification (priority, category, action detection) from Enron project."""
 
 import re
-import numpy as np
-import pandas as pd
-from typing import List, Dict, Optional, Tuple
-from dataclasses import dataclass, field
+from typing import List, Optional, Tuple
+from dataclasses import dataclass
 
 from orgnet.utils.logging import get_logger
 
@@ -12,10 +10,6 @@ logger = get_logger(__name__)
 
 # Try to import optional dependencies
 try:
-    from sklearn.feature_extraction.text import TfidfVectorizer
-    from sklearn.ensemble import RandomForestClassifier
-    from sklearn.naive_bayes import MultinomialNB
-
     SKLEARN_AVAILABLE = True
 except ImportError:
     SKLEARN_AVAILABLE = False
