@@ -1,10 +1,17 @@
 """Performance optimization utilities using numba, polars, and parquet."""
 
 import numpy as np
-from typing import Optional, Union, Callable, Dict
+from typing import Optional, Union, Callable, Dict, TYPE_CHECKING
 import pandas as pd
 import hashlib
 from pathlib import Path
+
+if TYPE_CHECKING:
+    # Only import polars types for type checking
+    try:
+        import polars as pl
+    except ImportError:
+        pl = None
 
 try:
     from numba import jit, prange
@@ -162,7 +169,7 @@ def sentiment_score_numba(words_array, positive_set, negative_set, negators_set,
     return (positive_count - negative_count) / n_words
 
 
-def pandas_to_polars(df: pd.DataFrame) -> Optional[pl.DataFrame]:
+def pandas_to_polars(df: pd.DataFrame) -> Optional["pl.DataFrame"]:
     """Convert pandas DataFrame to polars DataFrame."""
     if not POLARS_AVAILABLE:
         return None
@@ -172,14 +179,14 @@ def pandas_to_polars(df: pd.DataFrame) -> Optional[pl.DataFrame]:
         return None
 
 
-def polars_to_pandas(df_pl: pl.DataFrame) -> pd.DataFrame:
+def polars_to_pandas(df_pl: "pl.DataFrame") -> pd.DataFrame:
     """Convert polars DataFrame to pandas DataFrame."""
     if not POLARS_AVAILABLE:
         raise ImportError("polars not available")
     return df_pl.to_pandas()
 
 
-def save_parquet(df: Union[pd.DataFrame, pl.DataFrame], path: str) -> bool:
+def save_parquet(df: Union[pd.DataFrame, "pl.DataFrame"], path: str) -> bool:
     """
     Save DataFrame to parquet format.
 
@@ -194,7 +201,7 @@ def save_parquet(df: Union[pd.DataFrame, pl.DataFrame], path: str) -> bool:
         return False
 
     try:
-        if POLARS_AVAILABLE and isinstance(df, pl.DataFrame):
+        if POLARS_AVAILABLE and pl is not None and isinstance(df, pl.DataFrame):
             df.write_parquet(path)
         else:
             df.to_parquet(path, engine="pyarrow", index=False)
@@ -205,7 +212,7 @@ def save_parquet(df: Union[pd.DataFrame, pl.DataFrame], path: str) -> bool:
 
 def load_parquet(
     path: str, use_polars: bool = False
-) -> Union[pd.DataFrame, Optional[pl.DataFrame]]:
+) -> Union[pd.DataFrame, Optional["pl.DataFrame"]]:
     """
     Load DataFrame from parquet format.
 
