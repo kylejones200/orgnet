@@ -15,7 +15,6 @@ try:
     from sklearn.feature_extraction.text import TfidfVectorizer
     from sklearn.ensemble import RandomForestClassifier
     from sklearn.naive_bayes import MultinomialNB
-    from sklearn.preprocessing import StandardScaler, LabelEncoder
 
     SKLEARN_AVAILABLE = True
 except ImportError:

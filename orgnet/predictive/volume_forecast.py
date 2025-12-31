@@ -2,11 +2,19 @@
 
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Tuple, Optional
 from dataclasses import dataclass
-from datetime import datetime, timedelta
 
 from orgnet.utils.logging import get_logger
+
+# Try to import optional dependencies
+try:
+    import polars as pl
+
+    POLARS_AVAILABLE = True
+except ImportError:
+    POLARS_AVAILABLE = False
+    pl = None
 
 logger = get_logger(__name__)
 
@@ -55,8 +63,6 @@ def prepare_volume_data(
         raise ValueError(f"Unknown time period: {time_period}")
 
     # Count emails per period
-    from orgnet.utils.performance import polars_groupby
-
     if len(df) > 10000:
         df_pl = pl.from_pandas(df) if POLARS_AVAILABLE else None
         if df_pl is not None:

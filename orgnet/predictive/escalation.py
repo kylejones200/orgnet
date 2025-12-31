@@ -2,7 +2,7 @@
 
 import numpy as np
 import pandas as pd
-from typing import List, Dict, Optional
+from typing import Optional
 from dataclasses import dataclass
 
 from orgnet.utils.logging import get_logger

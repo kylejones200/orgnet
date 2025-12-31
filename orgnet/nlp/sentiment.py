@@ -2,7 +2,7 @@
 
 import re
 import numpy as np
-from typing import List, Dict, Optional
+from typing import Dict
 from dataclasses import dataclass
 
 from orgnet.utils.logging import get_logger

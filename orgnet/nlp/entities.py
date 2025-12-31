@@ -1,7 +1,7 @@
 """Entity extraction with NER and pattern matching (from Enron project)."""
 
 import re
-from typing import List, Dict, Optional, Set
+from typing import List, Dict
 from dataclasses import dataclass, field
 
 from orgnet.utils.logging import get_logger
