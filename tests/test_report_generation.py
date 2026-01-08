@@ -15,10 +15,10 @@ def test_report_generation(sample_people, sample_interactions):
     analyzer.interactions = sample_interactions
 
     # Build graph
-    graph = analyzer.build_graph()
+    analyzer.build_graph()
 
     # Run analysis
-    results = analyzer.analyze()
+    analyzer.analyze()
 
     # Generate report
     report_path = "test_report.html"

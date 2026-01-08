@@ -1,13 +1,8 @@
 """Tests for graph builder repeatability and edge weight schemes."""
 
-import pytest
-import networkx as nx
-from datetime import datetime, timedelta
-
 from orgnet.core import OrganizationalNetworkAnalyzer
 from orgnet.graph.builder import GraphBuilder
 from orgnet.config import Config
-from orgnet.data.models import Person, Interaction, InteractionType
 
 
 def test_graph_repeatability(sample_people, sample_interactions):

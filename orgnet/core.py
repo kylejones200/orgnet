@@ -473,7 +473,7 @@ class OrganizationalNetworkAnalyzer:
 
         html += """
     </table>
-    
+
     <h3>Top 20 by Degree Centrality</h3>
     <table>
         <tr>
@@ -511,7 +511,6 @@ class OrganizationalNetworkAnalyzer:
 
         # Add community list
         if community_results and "communities" in community_results:
-            communities = community_results["communities"]
             node_to_community = community_results.get("node_to_community", {})
 
             # Group nodes by community

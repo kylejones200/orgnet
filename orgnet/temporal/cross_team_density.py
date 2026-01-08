@@ -10,7 +10,6 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
 import pandas as pd
-import networkx as nx
 
 from orgnet.graph.temporal import TemporalGraph
 from orgnet.utils.logging import get_logger

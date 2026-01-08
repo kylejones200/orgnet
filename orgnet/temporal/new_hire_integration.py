@@ -13,7 +13,6 @@ import pandas as pd
 import networkx as nx
 
 from orgnet.graph.temporal import TemporalGraph
-from orgnet.metrics.centrality import CentralityAnalyzer
 from orgnet.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -77,12 +76,6 @@ class NewHireIntegrationTracker:
 
         # Track metrics over time
         integration_data = []
-        centrality_analyzer = CentralityAnalyzer(
-            self.temporal_graph.graph_builder.build_graph(
-                people=list(self.people.values()),
-                interactions=self.interactions,
-            )
-        )
 
         for snapshot in snapshots:
             snapshot_date = snapshot["timestamp"]

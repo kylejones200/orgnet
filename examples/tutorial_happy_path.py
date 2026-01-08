@@ -102,7 +102,7 @@ def create_sample_data():
     calendar_df.to_csv(calendar_path, index=False)
     logger.info(f"Created {calendar_path}")
 
-    logger.info(f"Sample data created in {tutorial_data_dir}/ directory")
+    logger.info("Sample data created in %s/ directory", tutorial_data_dir)
 
 
 def run_tutorial():
@@ -155,7 +155,7 @@ def run_tutorial():
         logger.info("✓ Analysis complete")
         logger.info(f"  - Found {results['communities']['num_communities']} communities")
         logger.info(f"  - Modularity: {results['communities']['modularity']:.3f}")
-        logger.info(f"  - Top 5 by betweenness:")
+        logger.info("  - Top 5 by betweenness:")
         top_betweenness = results["centrality"]["betweenness"].head(5)
         for _, row in top_betweenness.iterrows():
             logger.info(

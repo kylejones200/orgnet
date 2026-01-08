@@ -9,12 +9,12 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 import networkx as nx
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, Tuple, Optional
 
 from orgnet.utils.logging import get_logger
 
 try:
-    from sklearn.metrics import accuracy_score, roc_auc_score, classification_report
+    from sklearn.metrics import accuracy_score, roc_auc_score
     from sklearn.model_selection import train_test_split
 
     HAS_SKLEARN = True
@@ -209,7 +209,6 @@ def benchmark_gcn_classifier(
     try:
         # Prepare data
         nodes = list(graph.nodes())
-        y = np.array([labels[node] for node in nodes])
 
         # Train/test split (respecting graph structure)
         train_size = int(0.8 * len(nodes))

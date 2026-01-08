@@ -1,14 +1,11 @@
 """Tests for temporal features."""
 
-import pytest
-import networkx as nx
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from orgnet.temporal.new_hire_integration import NewHireIntegrationTracker
 from orgnet.temporal.cross_team_density import CrossTeamDensityTracker
 from orgnet.graph.temporal import TemporalGraph
 from orgnet.config import Config
-from orgnet.data.models import Person
 
 
 class MockPerson:

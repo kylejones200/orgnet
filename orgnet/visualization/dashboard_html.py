@@ -6,8 +6,6 @@ and shows: global overview, team view, and people view.
 
 from __future__ import annotations
 
-from typing import Dict, Optional
-
 from orgnet.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -62,7 +60,7 @@ def generate_dashboard_html(
         <h1>Organizational Network Dashboard</h1>
         <p>Real-time organizational network analysis</p>
     </div>
-    
+
     <div class="nav">
         <button class="active" onclick="showView('overview')">Global Overview</button>
         <button onclick="showView('team')">Team View</button>
@@ -116,11 +114,11 @@ def generate_dashboard_html(
             // Hide all views
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
-            
+
             // Show selected view
             document.getElementById(viewName).classList.add('active');
             event.target.classList.add('active');
-            
+
             // Load data for view
             if (viewName === 'overview') loadOverview();
             else if (viewName === 'team') loadTeamView();
@@ -131,7 +129,7 @@ def generate_dashboard_html(
                 // Load summary
                 const summaryRes = await fetch(API_BASE + '/api/summary');
                 const summary = await summaryRes.json();
-                
+
                 // Display KPIs
                 const kpis = summary.health_metrics || {{}};
                 document.getElementById('overview-kpis').innerHTML = `
@@ -156,7 +154,7 @@ def generate_dashboard_html(
                         <div class="kpi-label">Communities</div>
                     </div>
                 `;
-                
+
                 // Display insights
                 const insights = summary.key_findings || [];
                 let insightsHtml = '';
@@ -170,7 +168,7 @@ def generate_dashboard_html(
                     `;
                 }});
                 document.getElementById('overview-insights').innerHTML = insightsHtml || '<p>No insights available</p>';
-                
+
             }} catch (error) {{
                 document.getElementById('overview-kpis').innerHTML = `<div class="error">Error loading data: ${{error.message}}</div>`;
             }}
@@ -181,14 +179,14 @@ def generate_dashboard_html(
                 // Load communities
                 const commRes = await fetch(API_BASE + '/api/communities');
                 const communities = await commRes.json();
-                
+
                 let html = '<table><tr><th>Community ID</th><th>Size</th><th>Modularity</th></tr>';
                 html += `<tr><td>Overall</td><td>${{communities.num_communities || 0}}</td><td>${{(communities.modularity || 0).toFixed(3)}}</td></tr>`;
                 html += '</table>';
-                
+
                 document.getElementById('team-connections').innerHTML = html;
                 document.getElementById('team-bottlenecks').innerHTML = '<p>Bottleneck analysis would be displayed here</p>';
-                
+
             }} catch (error) {{
                 document.getElementById('team-connections').innerHTML = `<div class="error">Error: ${{error.message}}</div>`;
             }}
@@ -200,12 +198,12 @@ def generate_dashboard_html(
                 alert('Please enter a person ID');
                 return;
             }}
-            
+
             try {{
                 // Load metrics
                 const metricsRes = await fetch(API_BASE + '/api/metrics');
                 const metrics = await metricsRes.json();
-                
+
                 // Find person in metrics
                 let personData = null;
                 for (const metricType in metrics.centrality) {{
@@ -216,7 +214,7 @@ def generate_dashboard_html(
                         break;
                     }}
                 }}
-                
+
                 if (personData) {{
                     document.getElementById('people-content').innerHTML = `
                         <div class="table-container">
@@ -233,7 +231,7 @@ def generate_dashboard_html(
                 }} else {{
                     document.getElementById('people-content').innerHTML = `<div class="error">Person ${{personId}} not found</div>`;
                 }}
-                
+
             }} catch (error) {{
                 document.getElementById('people-content').innerHTML = `<div class="error">Error: ${{error.message}}</div>`;
             }}

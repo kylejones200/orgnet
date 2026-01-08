@@ -11,7 +11,6 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Sequence
 
 import networkx as nx
-import numpy as np
 import pandas as pd
 
 from orgnet.survival.discrete import (
