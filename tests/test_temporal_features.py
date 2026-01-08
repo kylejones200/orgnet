@@ -42,28 +42,19 @@ def test_new_hire_integration_tracking():
 
     # Test narrative generation
     try:
-        narrative = tracker.generate_integration_narrative(
-            type(
-                "obj",
-                (object,),
-                {
-                    "iloc": [
-                        type(
-                            "obj",
-                            (object,),
-                            {
-                                "__getitem__": lambda x: type(
-                                    "obj",
-                                    (object,),
-                                    {"integration_score": 0.5, "status": "on_track", "week": 1},
-                                )()
-                            },
-                        )
-                    ]()
-                },
-            )(),
-            "p1",
-        )
+        # Create a mock DataFrame-like object
+        class MockDataFrame:
+            def __init__(self):
+                self.iloc = [
+                    type(
+                        "obj",
+                        (object,),
+                        {"integration_score": 0.5, "status": "on_track", "week": 1},
+                    )()
+                ]
+
+        mock_df = MockDataFrame()
+        narrative = tracker.generate_integration_narrative(mock_df, "p1")
         assert "summary" in narrative
         assert "recommendation" in narrative
     except Exception:

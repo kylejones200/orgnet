@@ -23,6 +23,12 @@ try:
     HAS_TORCH = True
 except ImportError:
     HAS_TORCH = False
+    # Create dummy classes to avoid NameError when parsing the file
+    nn = None
+    torch = None
+    optim = None
+    Data = None
+    GCNConv = None
 
 try:
     from node2vec import Node2Vec
@@ -189,19 +195,21 @@ class SimpleGCNClassifier:
         return probs.numpy()
 
 
-class SimpleGCN(nn.Module):
-    """Simple 2-layer GCN for classification."""
+if HAS_TORCH:
 
-    def __init__(self, in_channels: int, hidden_channels: int, out_channels: int):
-        super(SimpleGCN, self).__init__()
-        self.conv1 = GCNConv(in_channels, hidden_channels)
-        self.conv2 = GCNConv(hidden_channels, out_channels)
+    class SimpleGCN(nn.Module):
+        """Simple 2-layer GCN for classification."""
 
-    def forward(self, x, edge_index):
-        x = self.conv1(x, edge_index)
-        x = torch.relu(x)
-        x = self.conv2(x, edge_index)
-        return x
+        def __init__(self, in_channels: int, hidden_channels: int, out_channels: int):
+            super(SimpleGCN, self).__init__()
+            self.conv1 = GCNConv(in_channels, hidden_channels)
+            self.conv2 = GCNConv(hidden_channels, out_channels)
+
+        def forward(self, x, edge_index):
+            x = self.conv1(x, edge_index)
+            x = torch.relu(x)
+            x = self.conv2(x, edge_index)
+            return x
 
 
 class Node2VecEmbedder:
