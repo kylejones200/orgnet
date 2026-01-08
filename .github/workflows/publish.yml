@@ -1,13 +1,15 @@
 name: Publish to PyPI
 
 on:
+  release:
+    types: [published]
   push:
     tags:
       - 'v*'
   workflow_dispatch:
 
 permissions:
-  id-token: write  # Required for trusted publishing
+  id-token: write  # Required for OIDC/trusted publishing
   contents: read   # Required for checking out code
 
 jobs:
@@ -15,12 +17,12 @@ jobs:
     name: Build and publish to PyPI
     runs-on: ubuntu-latest
     environment:
-      name: release
+      name: pypi  # GitHub environment name (configure in repo settings)
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+        
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -43,4 +45,5 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           print-hash: true
+          verbose: true
 

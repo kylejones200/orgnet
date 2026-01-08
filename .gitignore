@@ -52,6 +52,9 @@ examples/data/*.csv
 *.pdf
 reports/
 outputs/
+tutorial_data/
+tutorial_*.html
+test_*.html
 
 # Jupyter
 .ipynb_checkpoints/
@@ -80,3 +83,12 @@ models/
 # WIP folder
 wip/
 
+# Cursor IDE
+.cursor/
+
+# Build artifacts (should not be committed)
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.cache/

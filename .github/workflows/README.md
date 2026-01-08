@@ -29,20 +29,24 @@ The `publish.yml` workflow automatically publishes the package to PyPI when:
 
 ### Setup Required
 
-1. **Configure Trusted Publishing in PyPI**:
-   - Go to https://pypi.org/manage/projects/
-   - Select your project (orgnet)
-   - Go to "Publishing" → "Add a new pending publisher"
-   - Select "GitHub" as publisher
-   - Repository: `kylejones200/orgnet`
-   - Workflow filename: `.github/workflows/publish.yml`
-   - Environment: `release` (or leave empty)
-   - Save
+**See [PYPI_SETUP.md](./PYPI_SETUP.md) for detailed setup instructions.**
 
-2. **The workflow will automatically**:
+Quick setup:
+1. **Configure Trusted Publisher on PyPI** (Account settings → Trusted publishers):
+   - PyPI project: `orgnet`
+   - Owner: `kylejones200`
+   - Repository: `orgnet`
+   - Workflow: `.github/workflows/publish.yml`
+   - Environment: `pypi`
+
+2. **Create GitHub Environment** (Settings → Environments):
+   - Name: `pypi`
+   - (Optional) Add protection rules
+
+3. **The workflow will automatically**:
    - Build the package (wheel and source distribution)
    - Check the package with twine
-   - Publish to PyPI using trusted publishing (no API tokens needed!)
+   - Publish to PyPI using OIDC (no API tokens needed!)
 
 ### Manual Trigger
 

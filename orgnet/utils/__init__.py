@@ -19,6 +19,8 @@ from orgnet.utils.performance import (
     rolling_mean_numba,
     compute_edge_weights_numba,
 )
+from orgnet.utils.privacy import PrivacyManager, create_privacy_manager_from_config
+from orgnet.utils.audit import AuditLogger
 
 __all__ = [
     "get_logger",
@@ -38,4 +40,7 @@ __all__ = [
     "z_score_numba",
     "rolling_mean_numba",
     "compute_edge_weights_numba",
+    "PrivacyManager",
+    "create_privacy_manager_from_config",
+    "AuditLogger",
 ]

@@ -1,4 +1,4 @@
-.PHONY: format lint test clean pre-push install-hooks check build
+.PHONY: format lint test clean cleanup pre-push install-hooks check build
 
 format:
 	black orgnet/ tests/ example.py setup.py --line-length 100
@@ -28,4 +28,8 @@ clean:
 	find . -type f -name "*.pyo" -delete
 	find . -type d -name "*.egg-info" -exec rm -r {} + 2>/dev/null || true
 	rm -rf build/ dist/ *.egg-info
+
+cleanup:
+	@echo "Running comprehensive cleanup..."
+	@./scripts/cleanup.sh
 

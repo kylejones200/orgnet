@@ -48,6 +48,17 @@ Then open and run the notebooks in order:
 3. **03_community_detection.ipynb** - Finding communities and teams
 4. **04_visualization.ipynb** - Creating network visualizations
 
+### 4. Run the Happy Path Tutorial
+
+For a complete end-to-end walkthrough, run the happy path tutorial:
+
+```bash
+cd examples
+python tutorial_happy_path.py
+```
+
+This tutorial demonstrates the complete workflow from raw CSV files to final HTML report and dashboard, using a tiny fake organization. It's perfect for first-time users who want to see the full pipeline in action.
+
 ## Example Notebooks
 
 ### 01_basic_analysis.ipynb
@@ -135,7 +146,7 @@ To use your own data:
 If you get import errors:
 ```bash
 # Make sure you're in the project root
-cd /path/to/onapy
+cd /path/to/orgnet
 pip install -e .
 ```
 

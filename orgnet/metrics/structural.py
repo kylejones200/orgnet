@@ -7,6 +7,7 @@ from typing import Dict, List, Optional
 
 from orgnet.utils.logging import get_logger
 from orgnet.utils.performance import NUMBA_AVAILABLE, compute_constraint_numba
+from orgnet.metrics.utils import standardize_metric_output
 
 logger = get_logger(__name__)
 
@@ -23,14 +24,20 @@ class StructuralAnalyzer:
         """
         self.graph = graph
 
-    def compute_constraint(self) -> pd.DataFrame:
+    def compute_constraint(
+        self, standardize: bool = True, top_n: Optional[int] = None
+    ) -> pd.DataFrame:
         """
         Compute Burt's constraint measure (structural holes).
 
         Lower constraint = more brokerage opportunity.
 
+        Args:
+            standardize: If True, add ranks and flags
+            top_n: Number of top nodes to flag (for low constraint = high brokerage)
+
         Returns:
-            DataFrame with node_id and constraint
+            DataFrame with node_id, value, rank, flags
         """
         constraint_scores = {}
 
@@ -81,14 +88,32 @@ class StructuralAnalyzer:
             }
         )
 
-        return df.sort_values("constraint")
+        if standardize:
+            # For constraint, lower is better (more brokerage opportunity)
+            # We'll use inverted constraint (brokerage opportunity) for ranking
+            df["brokerage_opportunity"] = 1.0 / (df["constraint"] + 1e-10)
+            df = standardize_metric_output(
+                df, value_column="brokerage_opportunity", id_column="node_id", top_n=top_n
+            )
+            # Rename the standardized value column
+            df = df.rename(columns={"value": "brokerage_score"})
+            # Drop the temporary brokerage_opportunity column used for ranking
+            df = df.drop(columns=["brokerage_opportunity"])
 
-    def compute_core_periphery(self) -> pd.DataFrame:
+        return df.sort_values("constraint", ascending=True)
+
+    def compute_core_periphery(
+        self, standardize: bool = True, top_n: Optional[int] = None
+    ) -> pd.DataFrame:
         """
         Compute k-core decomposition and core-periphery structure.
 
+        Args:
+            standardize: If True, add ranks and flags
+            top_n: Number of top nodes to flag (highest coreness)
+
         Returns:
-            DataFrame with node_id, coreness, and core_periphery_class
+            DataFrame with node_id, value (coreness), rank, flags, and core_periphery_class
         """
         # K-core decomposition
         coreness = {}
@@ -137,7 +162,12 @@ class StructuralAnalyzer:
             }
         )
 
-        return df.sort_values("coreness", ascending=False)
+        if standardize:
+            df = standardize_metric_output(
+                df, value_column="coreness", id_column="node_id", top_n=top_n
+            )
+
+        return df.sort_values("coreness" if not standardize else "value", ascending=False)
 
     def identify_brokers(
         self, betweenness_df: pd.DataFrame, constraint_df: pd.DataFrame, top_n: int = 10
@@ -176,12 +206,18 @@ class StructuralAnalyzer:
 
         return merged.nlargest(top_n, "broker_score")
 
-    def compute_clustering_coefficient(self) -> pd.DataFrame:
+    def compute_clustering_coefficient(
+        self, standardize: bool = True, top_n: Optional[int] = None
+    ) -> pd.DataFrame:
         """
         Compute local clustering coefficient for each node.
 
+        Args:
+            standardize: If True, add ranks and flags
+            top_n: Number of top nodes to flag
+
         Returns:
-            DataFrame with node_id and clustering_coefficient
+            DataFrame with node_id, value, rank, flags
         """
         clustering = nx.clustering(
             self.graph, weight="weight" if nx.is_weighted(self.graph) else None
@@ -194,7 +230,12 @@ class StructuralAnalyzer:
             }
         )
 
-        return df.sort_values("clustering_coefficient", ascending=False)
+        if standardize:
+            df = standardize_metric_output(
+                df, value_column="clustering_coefficient", id_column="node_id", top_n=top_n
+            )
+
+        return df.sort_values("clustering_coefficient" if not standardize else "value", ascending=False)
 
     def detect_bridge_nodes(
         self, communities: Optional[Dict] = None, min_betweenness: float = 0.1, method: str = "both"

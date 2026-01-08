@@ -18,6 +18,8 @@ from orgnet.metrics.community import CommunityDetector
 from orgnet.metrics.structural import StructuralAnalyzer
 from orgnet.utils.logging import get_logger
 from orgnet.utils.performance import ParquetCache
+from orgnet.utils.privacy import create_privacy_manager_from_config
+from orgnet.utils.audit import AuditLogger
 
 try:
     from orgnet.visualization.dashboards import DashboardGenerator
@@ -42,6 +44,10 @@ class OrganizationalNetworkAnalyzer:
         self.data_ingester = DataIngester(self.config)
         self.graph_builder = GraphBuilder(self.config)
         self.cache = ParquetCache(cache_dir or ".cache/orgnet")
+
+        # Privacy and audit
+        self.privacy_manager = create_privacy_manager_from_config(self.config.config_dict)
+        self.audit_logger = AuditLogger()
 
         # Data storage
         self.people: List = []
@@ -142,27 +148,39 @@ class OrganizationalNetworkAnalyzer:
 
         return self.graph
 
-    def analyze(self) -> Dict:
+    def analyze(self, standardize_outputs: bool = True) -> Dict:
         """
         Run comprehensive analysis.
 
+        Args:
+            standardize_outputs: If True, add ranks and flags to metric outputs
+
         Returns:
-            Dictionary with all analysis results
+            Dictionary with all analysis results (standardized if requested)
         """
         if self.graph is None:
             self.build_graph()
 
         results = {}
 
-        # Centrality analysis
+        # Get top_n from config
+        top_n = self.config.analysis_config.get("centrality", {}).get("top_n", 20)
+
+        # Centrality analysis (standardized by default)
         centrality_analyzer = CentralityAnalyzer(self.graph)
-        self.centrality_results = centrality_analyzer.compute_all_centralities()
+        self.centrality_results = centrality_analyzer.compute_all_centralities(
+            top_n=top_n, standardize=standardize_outputs
+        )
         results["centrality"] = self.centrality_results
 
-        # Structural analysis
+        # Structural analysis (standardized by default)
         structural_analyzer = StructuralAnalyzer(self.graph)
-        results["constraint"] = structural_analyzer.compute_constraint()
-        results["core_periphery"] = structural_analyzer.compute_core_periphery()
+        results["constraint"] = structural_analyzer.compute_constraint(
+            standardize=standardize_outputs, top_n=top_n
+        )
+        results["core_periphery"] = structural_analyzer.compute_core_periphery(
+            standardize=standardize_outputs, top_n=top_n
+        )
 
         # Community detection
         community_detector = CommunityDetector(self.graph, cache=self.cache)
@@ -309,12 +327,13 @@ class OrganizationalNetworkAnalyzer:
             "top_bonders": analyzer.identify_bonders(),
         }
 
-    def generate_report(self, output_path: str = "ona_report.html"):
+    def generate_report(self, output_path: str = "ona_report.html", user: Optional[str] = None):
         """
         Generate comprehensive HTML report.
 
         Args:
             output_path: Path to save report
+            user: User identifier for audit logging
         """
         if self.graph is None:
             raise ValueError("Graph not built. Call build_graph() first.")
@@ -339,36 +358,66 @@ class OrganizationalNetworkAnalyzer:
         with open(output_path, "w") as f:
             f.write(html_content)
 
+        # Log audit event
+        self.audit_logger.log_analysis_run(
+            user=user,
+            dataset="unknown",  # Could be enhanced to track dataset
+            config=self.config.config_dict,
+            num_people=len(self.people),
+            num_interactions=len(self.interactions),
+            output_files=[output_path],
+            status="completed",
+        )
+
         return output_path
 
     def _create_html_report(self, executive_summary: Dict, health_metrics: Dict) -> str:
-        """Create HTML report content."""
+        """Create HTML report content with network map, centrality table, community list, and insights."""
+        # Get analysis results for tables
+        centrality_results = self.centrality_results or {}
+        community_results = self.community_results or {}
+        
+        # Create network visualization link
+        try:
+            from orgnet.visualization.network import NetworkVisualizer
+            visualizer = NetworkVisualizer(self.graph)
+            network_viz_path = "network_visualization.html"
+            visualizer.create_interactive_network(network_viz_path)
+            network_map_section = f'<p><a href="{network_viz_path}" target="_blank">View Interactive Network Map</a></p>'
+        except Exception:
+            network_map_section = '<p><em>Network visualization not available</em></p>'
+        
         html = f"""
 <!DOCTYPE html>
 <html>
 <head>
     <title>Organizational Network Analysis Report</title>
     <style>
-        body {{ font-family: Arial, sans-serif; margin: 20px; }}
+        body {{ font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }}
         h1 {{ color: #2c3e50; }}
-        h2 {{ color: #34495e; border-bottom: 2px solid #3498db; padding-bottom: 5px; }}
-        .metric {{ display: inline-block; margin: 10px; padding: 15px; background: #ecf0f1; border-radius: 5px; }}
+        h2 {{ color: #34495e; border-bottom: 2px solid #3498db; padding-bottom: 5px; margin-top: 30px; }}
+        .metric {{ display: inline-block; margin: 10px; padding: 15px; background: #ecf0f1; border-radius: 5px; min-width: 120px; }}
         .metric-value {{ font-size: 24px; font-weight: bold; color: #2980b9; }}
-        .metric-label {{ font-size: 12px; color: #7f8c8d; }}
-        .finding {{ margin: 10px 0; padding: 10px; border-left: 4px solid #3498db; background: #ebf5fb; }}
+        .metric-label {{ font-size: 12px; color: #7f8c8d; text-transform: uppercase; }}
+        .finding {{ margin: 10px 0; padding: 15px; border-left: 4px solid #3498db; background: #ebf5fb; border-radius: 4px; }}
         .warning {{ border-left-color: #e74c3c; background: #fadbd8; }}
         .info {{ border-left-color: #f39c12; background: #fef5e7; }}
         table {{ border-collapse: collapse; width: 100%; margin: 20px 0; }}
         th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
-        th {{ background-color: #3498db; color: white; }}
+        th {{ background-color: #3498db; color: white; position: sticky; top: 0; }}
+        tr:nth-child(even) {{ background-color: #f2f2f2; }}
+        .top-flag {{ color: #27ae60; font-weight: bold; }}
+        .community-badge {{ display: inline-block; padding: 3px 8px; background: #3498db; color: white; border-radius: 3px; font-size: 11px; margin: 2px; }}
     </style>
 </head>
 <body>
     <h1>Organizational Network Analysis Report</h1>
-    <p>Generated: {executive_summary['timestamp']}</p>
+    <p><strong>Generated:</strong> {executive_summary['timestamp']}</p>
+    <p><strong>Overall Status:</strong> <span style="color: {'#27ae60' if executive_summary['status'] == 'healthy' else '#e74c3c'}">{executive_summary['status'].upper()}</span></p>
 
-    <h2>Executive Summary</h2>
-    <p><strong>Overall Status:</strong> {executive_summary['status'].upper()}</p>
+    <h2>Network Map</h2>
+    {network_map_section}
+    <p><em>Interactive network visualization showing organizational structure and connections.</em></p>
 
     <h2>Health Metrics</h2>
     <div class="metric">
@@ -387,10 +436,112 @@ class OrganizationalNetworkAnalyzer:
         <div class="metric-value">{health_metrics['num_communities']}</div>
         <div class="metric-label">Communities</div>
     </div>
+    <div class="metric">
+        <div class="metric-value">{health_metrics['num_nodes']}</div>
+        <div class="metric-label">People</div>
+    </div>
+    <div class="metric">
+        <div class="metric-value">{health_metrics['num_edges']}</div>
+        <div class="metric-label">Connections</div>
+    </div>
 
-    <h2>Key Findings</h2>
+    <h2>Centrality Metrics</h2>
+    <h3>Top 20 by Betweenness Centrality</h3>
+    <table>
+        <tr>
+            <th>Rank</th>
+            <th>Person ID</th>
+            <th>Betweenness</th>
+            <th>Top 5%</th>
+        </tr>
 """
+        
+        # Add centrality table
+        if "betweenness" in centrality_results:
+            betweenness_df = centrality_results["betweenness"]
+            for idx, row in betweenness_df.head(20).iterrows():
+                top_flag = "✓" if row.get("top_percentile_flag", False) else ""
+                html += f"""
+        <tr>
+            <td>{row.get('rank', idx + 1)}</td>
+            <td>{row.get('node_id', 'N/A')}</td>
+            <td>{row.get('value', row.get('betweenness_centrality', 0)):.4f}</td>
+            <td class="top-flag">{top_flag}</td>
+        </tr>
+"""
+        
+        html += """
+    </table>
+    
+    <h3>Top 20 by Degree Centrality</h3>
+    <table>
+        <tr>
+            <th>Rank</th>
+            <th>Person ID</th>
+            <th>Degree (Weighted)</th>
+            <th>Top 5%</th>
+        </tr>
+"""
+        
+        if "degree" in centrality_results:
+            degree_df = centrality_results["degree"]
+            for idx, row in degree_df.head(20).iterrows():
+                top_flag = "✓" if row.get("top_percentile_flag", False) else ""
+                html += f"""
+        <tr>
+            <td>{row.get('rank', idx + 1)}</td>
+            <td>{row.get('node_id', 'N/A')}</td>
+            <td>{row.get('value', row.get('degree_weighted', 0)):.2f}</td>
+            <td class="top-flag">{top_flag}</td>
+        </tr>
+"""
+        
+        html += """
+    </table>
 
+    <h2>Community List</h2>
+    <table>
+        <tr>
+            <th>Community ID</th>
+            <th>Size</th>
+            <th>Members (sample)</th>
+        </tr>
+"""
+        
+        # Add community list
+        if community_results and "communities" in community_results:
+            communities = community_results["communities"]
+            node_to_community = community_results.get("node_to_community", {})
+            
+            # Group nodes by community
+            comm_dict = {}
+            for node, comm_id in node_to_community.items():
+                if comm_id not in comm_dict:
+                    comm_dict[comm_id] = []
+                comm_dict[comm_id].append(node)
+            
+            # Sort by size
+            sorted_comms = sorted(comm_dict.items(), key=lambda x: len(x[1]), reverse=True)
+            
+            for comm_id, members in sorted_comms[:20]:  # Top 20 communities
+                sample_members = ", ".join(members[:5])
+                if len(members) > 5:
+                    sample_members += f" ... (+{len(members) - 5} more)"
+                html += f"""
+        <tr>
+            <td><span class="community-badge">Community {comm_id}</span></td>
+            <td>{len(members)}</td>
+            <td>{sample_members}</td>
+        </tr>
+"""
+        
+        html += """
+    </table>
+
+    <h2>Key Insights</h2>
+"""
+        
+        # Add key findings/insights
         for finding in executive_summary.get("key_findings", []):
             finding_class = finding.get("type", "info")
             html += f"""
@@ -400,30 +551,36 @@ class OrganizationalNetworkAnalyzer:
         <p><strong>Recommendation:</strong> {finding['recommendation']}</p>
     </div>
 """
-
-        html += """
-    <h2>Top Brokers</h2>
-    <table>
-        <tr>
-            <th>Person ID</th>
-            <th>Broker Score</th>
-            <th>Betweenness</th>
-            <th>Constraint</th>
-        </tr>
+        
+        # Add top brokers as insight
+        if executive_summary.get("top_brokers"):
+            html += """
+    <div class="finding info">
+        <h3>Key Brokers Identified</h3>
+        <p>These individuals serve as important bridges in the network, connecting different parts of the organization.</p>
+        <table>
+            <tr>
+                <th>Person ID</th>
+                <th>Broker Score</th>
+                <th>Betweenness</th>
+                <th>Constraint</th>
+            </tr>
 """
-
-        for broker in executive_summary.get("top_brokers", [])[:10]:
-            html += f"""
-        <tr>
-            <td>{broker.get('node_id', 'N/A')}</td>
-            <td>{broker.get('broker_score', 0):.3f}</td>
-            <td>{broker.get('betweenness_centrality', 0):.3f}</td>
-            <td>{broker.get('constraint', 0):.3f}</td>
-        </tr>
+            for broker in executive_summary.get("top_brokers", [])[:10]:
+                html += f"""
+            <tr>
+                <td>{broker.get('node_id', 'N/A')}</td>
+                <td>{broker.get('broker_score', 0):.3f}</td>
+                <td>{broker.get('betweenness_centrality', 0):.3f}</td>
+                <td>{broker.get('constraint', 0):.3f}</td>
+            </tr>
 """
-
+            html += """
+        </table>
+    </div>
+"""
+        
         html += """
-    </table>
 </body>
 </html>
 """

@@ -149,6 +149,67 @@ def create_app(config_path: Optional[str] = None):
         except Exception as e:
             return jsonify({"error": str(e)}), 400
 
+    @app.route("/api/time_series", methods=["GET"])
+    def get_time_series():
+        """Get time series of key indicators."""
+        if analyzer.graph is None:
+            return jsonify({"error": "Graph not built"}), 400
+
+        try:
+            # Build temporal snapshots if available
+            if analyzer.temporal_graph is None:
+                from orgnet.graph.temporal import TemporalGraph
+                analyzer.temporal_graph = TemporalGraph(analyzer.config)
+
+            # Get snapshots
+            snapshots = analyzer.temporal_graph.build_snapshots(
+                people=analyzer.people,
+                interactions=analyzer.interactions,
+            )
+
+            # Compute temporal metrics
+            temporal_metrics = analyzer.temporal_graph.compute_temporal_metrics(snapshots)
+
+            # Convert to JSON-serializable format
+            time_series_data = temporal_metrics.to_dict("records")
+
+            return jsonify(
+                {
+                    "metrics": time_series_data,
+                    "indicators": [
+                        "density",
+                        "avg_clustering",
+                        "avg_path_length",
+                        "nodes",
+                        "edges",
+                    ],
+                }
+            )
+        except Exception as e:
+            logger.error(f"Error generating time series: {e}")
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/summary", methods=["GET"])
+    def get_summary():
+        """Get summary metrics (narrow API surface)."""
+        if analyzer.graph is None:
+            return jsonify({"error": "Graph not built"}), 400
+
+        from orgnet.visualization.dashboards import DashboardGenerator
+
+        dashboard = DashboardGenerator(analyzer.graph)
+        health_metrics = dashboard.generate_health_dashboard()
+        executive_summary = dashboard.generate_executive_summary()
+
+        return jsonify(
+            {
+                "status": executive_summary["status"],
+                "health_metrics": health_metrics,
+                "key_findings": executive_summary.get("key_findings", []),
+                "timestamp": executive_summary["timestamp"],
+            }
+        )
+
     return app
 
 

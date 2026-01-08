@@ -22,9 +22,11 @@ class GraphBuilder:
         self.config = config
         graph_config = config.graph_config
         self.weight_calculator = EdgeWeightCalculator(
+            weight_scheme=graph_config.get("weight_scheme", "composite"),
             recency_decay_lambda=graph_config.get("recency_decay_lambda", 0.1),
             reciprocity_weight=graph_config.get("reciprocity_weight", 0.5),
             responsiveness_weight=graph_config.get("responsiveness_weight", 0.3),
+            role_weights=graph_config.get("role_weights", {}),
         )
         self.layer_weights = graph_config.get("layer_weights", {})
         self.min_edge_weight = graph_config.get("min_edge_weight", 0.01)
@@ -73,7 +75,7 @@ class GraphBuilder:
         layers = {}
 
         if interactions:
-            comm_weights = self.weight_calculator.compute_communication_weights(interactions)
+            comm_weights = self.weight_calculator.compute_communication_weights(interactions, people=people)
             layers["communication"] = comm_weights
 
         if meetings:
@@ -134,7 +136,7 @@ class GraphBuilder:
             )
 
         if interactions:
-            comm_weights = self.weight_calculator.compute_communication_weights(interactions)
+            comm_weights = self.weight_calculator.compute_communication_weights(interactions, people=people)
 
             for i in comm_weights.index:
                 for j in comm_weights.columns:
@@ -184,7 +186,7 @@ class GraphBuilder:
 
         if interactions:
             G_comm = base_G.copy()
-            comm_weights = self.weight_calculator.compute_communication_weights(interactions)
+            comm_weights = self.weight_calculator.compute_communication_weights(interactions, people=people)
             self._add_edges_from_matrix(G_comm, comm_weights)
             graphs["communication"] = G_comm
 

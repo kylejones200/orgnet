@@ -2,9 +2,10 @@
 
 import networkx as nx
 import pandas as pd
-from typing import Dict
+from typing import Dict, Optional
 
 from orgnet.utils.logging import get_logger
+from orgnet.metrics.utils import standardize_metric_output
 
 logger = get_logger(__name__)
 
@@ -21,52 +22,59 @@ class CentralityAnalyzer:
         """
         self.graph = graph
 
-    def compute_all_centralities(self, top_n: int = 20) -> Dict[str, pd.DataFrame]:
+    def compute_all_centralities(self, top_n: int = 20, standardize: bool = True) -> Dict[str, pd.DataFrame]:
         """
         Compute all centrality measures.
 
         Args:
-            top_n: Number of top nodes to return in summary
+            top_n: Number of top nodes to flag
+            standardize: If True, add ranks and flags to outputs
 
         Returns:
-            Dictionary mapping metric name to DataFrame with results
+            Dictionary mapping metric name to DataFrame with standardized results
         """
         results = {}
 
-        # Degree centrality
-        degree = self.compute_degree_centrality()
+        # Degree centrality (use weighted degree as primary value)
+        degree = self.compute_degree_centrality(standardize=standardize, top_n=top_n)
         results["degree"] = degree
 
         # Betweenness centrality
-        betweenness = self.compute_betweenness_centrality()
+        betweenness = self.compute_betweenness_centrality(standardize=standardize, top_n=top_n)
         results["betweenness"] = betweenness
 
         # Eigenvector centrality
-        eigenvector = self.compute_eigenvector_centrality()
+        eigenvector = self.compute_eigenvector_centrality(standardize=standardize, top_n=top_n)
         results["eigenvector"] = eigenvector
 
         # Closeness centrality
-        closeness = self.compute_closeness_centrality()
+        closeness = self.compute_closeness_centrality(standardize=standardize, top_n=top_n)
         results["closeness"] = closeness
 
         # PageRank
-        pagerank = self.compute_pagerank()
+        pagerank = self.compute_pagerank(standardize=standardize, top_n=top_n)
         results["pagerank"] = pagerank
 
         # HITS (if directed graph)
         if isinstance(self.graph, nx.DiGraph):
-            hits = self.compute_hits()
+            hits = self.compute_hits(standardize=standardize, top_n=top_n)
             results["hits_authority"] = hits["authority"]
             results["hits_hub"] = hits["hub"]
 
         return results
 
-    def compute_degree_centrality(self) -> pd.DataFrame:
+    def compute_degree_centrality(
+        self, standardize: bool = True, top_n: Optional[int] = None
+    ) -> pd.DataFrame:
         """
         Compute degree centrality (weighted and unweighted).
 
+        Args:
+            standardize: If True, add ranks and flags
+            top_n: Number of top nodes to flag (uses default if None)
+
         Returns:
-            DataFrame with node_id, degree_unweighted, degree_weighted, in_degree, out_degree
+            DataFrame with node_id, value (degree_weighted), rank, flags, and additional columns
         """
         if isinstance(self.graph, nx.DiGraph):
             in_degree = dict(self.graph.in_degree())
@@ -96,17 +104,26 @@ class CentralityAnalyzer:
             }
         )
 
-        return df.sort_values("degree_weighted", ascending=False)
+        if standardize:
+            df = standardize_metric_output(
+                df, value_column="degree_weighted", id_column="node_id", top_n=top_n
+            )
 
-    def compute_betweenness_centrality(self, normalized: bool = True) -> pd.DataFrame:
+        return df.sort_values("degree_weighted" if not standardize else "value", ascending=False)
+
+    def compute_betweenness_centrality(
+        self, normalized: bool = True, standardize: bool = True, top_n: Optional[int] = None
+    ) -> pd.DataFrame:
         """
         Compute betweenness centrality.
 
         Args:
             normalized: Whether to normalize by number of pairs
+            standardize: If True, add ranks and flags
+            top_n: Number of top nodes to flag
 
         Returns:
-            DataFrame with node_id and betweenness_centrality
+            DataFrame with node_id, value, rank, flags
         """
         if self.graph.number_of_nodes() == 0:
             return pd.DataFrame(columns=["node_id", "betweenness_centrality"])
@@ -124,17 +141,26 @@ class CentralityAnalyzer:
             }
         )
 
-        return df.sort_values("betweenness_centrality", ascending=False)
+        if standardize:
+            df = standardize_metric_output(
+                df, value_column="betweenness_centrality", id_column="node_id", top_n=top_n
+            )
 
-    def compute_eigenvector_centrality(self, max_iter: int = 100) -> pd.DataFrame:
+        return df.sort_values("betweenness_centrality" if not standardize else "value", ascending=False)
+
+    def compute_eigenvector_centrality(
+        self, max_iter: int = 100, standardize: bool = True, top_n: Optional[int] = None
+    ) -> pd.DataFrame:
         """
         Compute eigenvector centrality.
 
         Args:
             max_iter: Maximum iterations
+            standardize: If True, add ranks and flags
+            top_n: Number of top nodes to flag
 
         Returns:
-            DataFrame with node_id and eigenvector_centrality
+            DataFrame with node_id, value, rank, flags
         """
         if self.graph.number_of_nodes() == 0:
             return pd.DataFrame(columns=["node_id", "eigenvector_centrality"])
@@ -159,14 +185,25 @@ class CentralityAnalyzer:
             }
         )
 
-        return df.sort_values("eigenvector_centrality", ascending=False)
+        if standardize:
+            df = standardize_metric_output(
+                df, value_column="eigenvector_centrality", id_column="node_id", top_n=top_n
+            )
 
-    def compute_closeness_centrality(self) -> pd.DataFrame:
+        return df.sort_values("eigenvector_centrality" if not standardize else "value", ascending=False)
+
+    def compute_closeness_centrality(
+        self, standardize: bool = True, top_n: Optional[int] = None
+    ) -> pd.DataFrame:
         """
         Compute closeness centrality.
 
+        Args:
+            standardize: If True, add ranks and flags
+            top_n: Number of top nodes to flag
+
         Returns:
-            DataFrame with node_id and closeness_centrality
+            DataFrame with node_id, value, rank, flags
         """
         if self.graph.number_of_nodes() == 0:
             return pd.DataFrame(columns=["node_id", "closeness_centrality"])
@@ -192,17 +229,26 @@ class CentralityAnalyzer:
             {"node_id": list(closeness.keys()), "closeness_centrality": list(closeness.values())}
         )
 
-        return df.sort_values("closeness_centrality", ascending=False)
+        if standardize:
+            df = standardize_metric_output(
+                df, value_column="closeness_centrality", id_column="node_id", top_n=top_n
+            )
 
-    def compute_pagerank(self, damping: float = 0.85) -> pd.DataFrame:
+        return df.sort_values("closeness_centrality" if not standardize else "value", ascending=False)
+
+    def compute_pagerank(
+        self, damping: float = 0.85, standardize: bool = True, top_n: Optional[int] = None
+    ) -> pd.DataFrame:
         """
         Compute PageRank centrality.
 
         Args:
             damping: Damping factor
+            standardize: If True, add ranks and flags
+            top_n: Number of top nodes to flag
 
         Returns:
-            DataFrame with node_id and pagerank
+            DataFrame with node_id, value, rank, flags
         """
         if self.graph.number_of_nodes() == 0:
             return pd.DataFrame(columns=["node_id", "pagerank"])
@@ -213,9 +259,20 @@ class CentralityAnalyzer:
 
         df = pd.DataFrame({"node_id": list(pagerank.keys()), "pagerank": list(pagerank.values())})
 
-        return df.sort_values("pagerank", ascending=False)
+        if standardize:
+            df = standardize_metric_output(
+                df, value_column="pagerank", id_column="node_id", top_n=top_n
+            )
 
-    def compute_hits(self, max_iter: int = 100, normalized: bool = True) -> Dict[str, pd.DataFrame]:
+        return df.sort_values("pagerank" if not standardize else "value", ascending=False)
+
+    def compute_hits(
+        self,
+        max_iter: int = 100,
+        normalized: bool = True,
+        standardize: bool = True,
+        top_n: Optional[int] = None,
+    ) -> Dict[str, pd.DataFrame]:
         """
         Compute HITS (Hyperlink-Induced Topic Search) scores (from Enron project).
 
@@ -226,6 +283,8 @@ class CentralityAnalyzer:
         Args:
             max_iter: Maximum iterations
             normalized: Whether to normalize scores
+            standardize: If True, add ranks and flags
+            top_n: Number of top nodes to flag
 
         Returns:
             Dictionary with 'authority' and 'hub' DataFrames
@@ -263,11 +322,24 @@ class CentralityAnalyzer:
                 "node_id": list(authority_scores.keys()),
                 "authority_score": list(authority_scores.values()),
             }
-        ).sort_values("authority_score", ascending=False)
+        )
 
         hub_df = pd.DataFrame(
             {"node_id": list(hub_scores.keys()), "hub_score": list(hub_scores.values())}
-        ).sort_values("hub_score", ascending=False)
+        )
+
+        if standardize:
+            authority_df = standardize_metric_output(
+                authority_df, value_column="authority_score", id_column="node_id", top_n=top_n
+            )
+            hub_df = standardize_metric_output(
+                hub_df, value_column="hub_score", id_column="node_id", top_n=top_n
+            )
+
+        authority_df = authority_df.sort_values(
+            "authority_score" if not standardize else "value", ascending=False
+        )
+        hub_df = hub_df.sort_values("hub_score" if not standardize else "value", ascending=False)
 
         return {"authority": authority_df, "hub": hub_df}
 
