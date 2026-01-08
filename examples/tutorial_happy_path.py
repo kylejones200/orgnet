@@ -24,8 +24,26 @@ def create_sample_data():
     hris_data = {
         "person_id": ["p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8"],
         "name": ["Alice", "Bob", "Charlie", "Diana", "Eve", "Frank", "Grace", "Henry"],
-        "department": ["Engineering", "Engineering", "Product", "Product", "Sales", "Sales", "Engineering", "Product"],
-        "role": ["Engineer", "Manager", "Product Manager", "Designer", "Sales Rep", "Sales Manager", "Engineer", "Product Manager"],
+        "department": [
+            "Engineering",
+            "Engineering",
+            "Product",
+            "Product",
+            "Sales",
+            "Sales",
+            "Engineering",
+            "Product",
+        ],
+        "role": [
+            "Engineer",
+            "Manager",
+            "Product Manager",
+            "Designer",
+            "Sales Rep",
+            "Sales Manager",
+            "Engineer",
+            "Product Manager",
+        ],
         "start_date": [
             "2024-01-01",
             "2023-06-01",
@@ -123,7 +141,9 @@ def run_tutorial():
     logger.info("\n[Step 4] Building organizational graph...")
     try:
         graph = analyzer.build_graph()
-        logger.info(f"✓ Graph built: {graph.number_of_nodes()} nodes, {graph.number_of_edges()} edges")
+        logger.info(
+            f"✓ Graph built: {graph.number_of_nodes()} nodes, {graph.number_of_edges()} edges"
+        )
     except Exception as e:
         logger.error(f"Error building graph: {e}")
         return
@@ -138,7 +158,9 @@ def run_tutorial():
         logger.info(f"  - Top 5 by betweenness:")
         top_betweenness = results["centrality"]["betweenness"].head(5)
         for _, row in top_betweenness.iterrows():
-            logger.info(f"    {row['node_id']}: {row.get('value', row.get('betweenness_centrality', 0)):.3f}")
+            logger.info(
+                f"    {row['node_id']}: {row.get('value', row.get('betweenness_centrality', 0)):.3f}"
+            )
     except Exception as e:
         logger.error(f"Error in analysis: {e}")
         return
@@ -149,7 +171,9 @@ def run_tutorial():
         output_dir = os.path.dirname(__file__)
         report_path = analyzer.generate_report(os.path.join(output_dir, "tutorial_report.html"))
         logger.info(f"✓ Report generated: {report_path}")
-        logger.info("  Report includes: network map, centrality tables, community list, and insights")
+        logger.info(
+            "  Report includes: network map, centrality tables, community list, and insights"
+        )
     except Exception as e:
         logger.error(f"Error generating report: {e}")
         return
@@ -161,7 +185,9 @@ def run_tutorial():
 
         output_dir = os.path.dirname(__file__)
         visualizer = NetworkVisualizer(graph)
-        viz_path = visualizer.create_interactive_network(os.path.join(output_dir, "tutorial_network.html"))
+        viz_path = visualizer.create_interactive_network(
+            os.path.join(output_dir, "tutorial_network.html")
+        )
         logger.info(f"✓ Network visualization: {viz_path}")
     except Exception as e:
         logger.warning(f"Visualization not available: {e}")
@@ -173,7 +199,8 @@ def run_tutorial():
 
         output_dir = os.path.dirname(__file__)
         dashboard_path = generate_dashboard_html(
-            api_base_url="http://localhost:5000", output_path=os.path.join(output_dir, "tutorial_dashboard.html")
+            api_base_url="http://localhost:5000",
+            output_path=os.path.join(output_dir, "tutorial_dashboard.html"),
         )
         logger.info(f"✓ Dashboard generated: {dashboard_path}")
         logger.info("  Dashboard includes: global overview, team view, and people view")
@@ -186,16 +213,21 @@ def run_tutorial():
     logger.info("=" * 60)
     output_dir = os.path.dirname(__file__)
     logger.info("\nGenerated files:")
-    logger.info(f"  - {os.path.join(output_dir, 'tutorial_report.html')} (comprehensive analysis report)")
-    logger.info(f"  - {os.path.join(output_dir, 'tutorial_network.html')} (interactive network map)")
+    logger.info(
+        f"  - {os.path.join(output_dir, 'tutorial_report.html')} (comprehensive analysis report)"
+    )
+    logger.info(
+        f"  - {os.path.join(output_dir, 'tutorial_network.html')} (interactive network map)"
+    )
     logger.info(f"  - {os.path.join(output_dir, 'tutorial_dashboard.html')} (lean dashboard)")
     logger.info("\nNext steps:")
     logger.info("  1. Open tutorial_report.html in a web browser")
     logger.info("  2. Review the network map, centrality tables, and insights")
     logger.info("  3. Explore the dashboard views")
-    logger.info(f"  4. Try with your own data by replacing {os.path.join(output_dir, 'tutorial_data')}/*.csv files")
+    logger.info(
+        f"  4. Try with your own data by replacing {os.path.join(output_dir, 'tutorial_data')}/*.csv files"
+    )
 
 
 if __name__ == "__main__":
     run_tutorial()
-

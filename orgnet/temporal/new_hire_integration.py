@@ -77,10 +77,12 @@ class NewHireIntegrationTracker:
 
         # Track metrics over time
         integration_data = []
-        centrality_analyzer = CentralityAnalyzer(self.temporal_graph.graph_builder.build_graph(
-            people=list(self.people.values()),
-            interactions=self.interactions,
-        ))
+        centrality_analyzer = CentralityAnalyzer(
+            self.temporal_graph.graph_builder.build_graph(
+                people=list(self.people.values()),
+                interactions=self.interactions,
+            )
+        )
 
         for snapshot in snapshots:
             snapshot_date = snapshot["timestamp"]
@@ -274,9 +276,7 @@ class NewHireIntegrationTracker:
             "weeks_tracked": len(integration_df),
         }
 
-    def identify_at_risk_hires(
-        self, window_days: int = 90, threshold: float = 0.3
-    ) -> pd.DataFrame:
+    def identify_at_risk_hires(self, window_days: int = 90, threshold: float = 0.3) -> pd.DataFrame:
         """
         Identify all new hires at risk across the organization.
 
@@ -310,7 +310,9 @@ class NewHireIntegrationTracker:
                         {
                             "person_id": person_id,
                             "name": person.name if hasattr(person, "name") else person_id,
-                            "department": person.department if hasattr(person, "department") else "Unknown",
+                            "department": (
+                                person.department if hasattr(person, "department") else "Unknown"
+                            ),
                             "weeks_elapsed": latest["week"],
                             "integration_score": latest["integration_score"],
                             "current_degree": latest["degree"],
@@ -324,4 +326,3 @@ class NewHireIntegrationTracker:
                 continue
 
         return pd.DataFrame(at_risk_data)
-

@@ -228,4 +228,3 @@ def attach_survival_outputs(
         validate="one_to_one",
     )
     return out
-

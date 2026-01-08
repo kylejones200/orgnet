@@ -65,9 +65,7 @@ class PrivacyManager:
         self.hash_mapping[identifier] = hash_value
         return hash_value
 
-    def anonymize_dataframe(
-        self, df: pd.DataFrame, id_columns: List[str]
-    ) -> pd.DataFrame:
+    def anonymize_dataframe(self, df: pd.DataFrame, id_columns: List[str]) -> pd.DataFrame:
         """
         Anonymize identifiers in a DataFrame.
 
@@ -102,14 +100,16 @@ class PrivacyManager:
             Filtered DataFrame
         """
         if timestamp_column not in df.columns:
-            logger.warning(f"Timestamp column {timestamp_column} not found, skipping retention filter")
+            logger.warning(
+                f"Timestamp column {timestamp_column} not found, skipping retention filter"
+            )
             return df
 
         cutoff_date = datetime.now() - timedelta(days=self.retention_days)
         df = df.copy()
         df[timestamp_column] = pd.to_datetime(df[timestamp_column])
         filtered = df[df[timestamp_column] >= cutoff_date]
-        
+
         logger.info(
             f"Retention filter: {len(df)} rows -> {len(filtered)} rows "
             f"(cutoff: {cutoff_date.date()})"
@@ -220,9 +220,7 @@ class PrivacyManager:
 
         aggregated = df.groupby(group_by, as_index=False).agg(agg_dict)
 
-        logger.info(
-            f"Aggregated {len(df)} interactions -> {len(aggregated)} aggregated records"
-        )
+        logger.info(f"Aggregated {len(df)} interactions -> {len(aggregated)} aggregated records")
 
         return aggregated
 
@@ -295,4 +293,3 @@ def create_privacy_manager_from_config(config: Dict) -> PrivacyManager:
         min_group_size=privacy_config.get("min_group_size", 5),
         hash_salt=privacy_config.get("hash_salt"),
     )
-

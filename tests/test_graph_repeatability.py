@@ -57,20 +57,20 @@ def test_degree_distribution(sample_people, sample_interactions):
 def test_edge_weight_schemes(sample_people, sample_interactions):
     """Test different edge weight schemes produce different but valid graphs."""
     config = Config()
-    
+
     schemes = ["pure_count", "time_decay", "composite"]
     graphs = {}
-    
+
     for scheme in schemes:
         config.config_dict["graph"]["weight_scheme"] = scheme
         builder = GraphBuilder(config)
         graph = builder.build_graph(sample_people, interactions=sample_interactions)
         graphs[scheme] = graph
-        
+
         # All schemes should produce valid graphs
         assert graph.number_of_nodes() == len(sample_people)
         assert graph.number_of_edges() >= 0
-    
+
     # Different schemes may produce different edge weights
     # But all should have same nodes
     for scheme in schemes:
@@ -89,12 +89,11 @@ def test_sample_edges(sample_people, sample_interactions):
     if graph.number_of_edges() > 0:
         # Get first edge
         u, v = list(graph.edges())[0]
-        
+
         # Check edge has weight
         assert "weight" in graph[u][v]
         assert graph[u][v]["weight"] > 0
-        
+
         # Check nodes exist
         assert u in graph.nodes()
         assert v in graph.nodes()
-

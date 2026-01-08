@@ -251,7 +251,10 @@ class AuditLogger:
             "total_runs": len(analysis_runs),
             "successful_runs": len(analysis_runs[analysis_runs["status"] == "completed"]),
             "failed_runs": len(analysis_runs[analysis_runs["status"] == "failed"]),
-            "unique_users": analysis_runs["user"].nunique() if "user" in analysis_runs.columns else 0,
-            "unique_datasets": analysis_runs["dataset"].nunique() if "dataset" in analysis_runs.columns else 0,
+            "unique_users": (
+                analysis_runs["user"].nunique() if "user" in analysis_runs.columns else 0
+            ),
+            "unique_datasets": (
+                analysis_runs["dataset"].nunique() if "dataset" in analysis_runs.columns else 0
+            ),
         }
-

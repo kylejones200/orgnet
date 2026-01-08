@@ -18,6 +18,7 @@ from orgnet.utils.logging import get_logger
 
 try:
     from ts2net import HVG, NVG, RecurrenceNetwork, TransitionNetwork, build_network
+
     HAS_TS2NET = True
 except ImportError:
     HAS_TS2NET = False
@@ -87,7 +88,9 @@ def _prepare_series(values: pd.Series, cfg: Ts2NetConfig) -> np.ndarray:
     arr = values.to_numpy(dtype=float)
 
     if arr.size < cfg.min_length:
-        raise ValueError(f"Series length {arr.size} below min_length {cfg.min_length} for ts2net features.")
+        raise ValueError(
+            f"Series length {arr.size} below min_length {cfg.min_length} for ts2net features."
+        )
 
     if cfg.max_length is not None and arr.size > cfg.max_length:
         # Simple uniform downsample
@@ -140,7 +143,9 @@ def _build_ts2net_graph(series: np.ndarray, cfg: Ts2NetConfig):
             return builder
         else:
             # Try using build_network convenience function
-            builder = build_network(series, method, **{k: v for k, v in cfg.__dict__.items() if v is not None})
+            builder = build_network(
+                series, method, **{k: v for k, v in cfg.__dict__.items() if v is not None}
+            )
             return builder
     except Exception as e:
         logger.error(f"Failed to build ts2net graph with method {method}: {e}")
@@ -236,9 +241,7 @@ def _graph_features(builder) -> Dict[str, float]:
     return features
 
 
-def features_for_series(
-    values: pd.Series, cfg: Optional[Ts2NetConfig] = None
-) -> Dict[str, float]:
+def features_for_series(values: pd.Series, cfg: Optional[Ts2NetConfig] = None) -> Dict[str, float]:
     """Compute ts2net based features for a single univariate series.
 
     Args:
@@ -363,9 +366,7 @@ def person_temporal_features(
     df["timestamp"] = pd.to_datetime(df["timestamp"])
 
     # Filter to interactions involving this person
-    person_interactions = df[
-        (df["sender_id"] == person_id) | (df["receiver_id"] == person_id)
-    ]
+    person_interactions = df[(df["sender_id"] == person_id) | (df["receiver_id"] == person_id)]
 
     if person_interactions.empty:
         raise ValueError(f"No interactions found for person {person_id}")
@@ -405,4 +406,3 @@ def merge_edge_temporal_features(
         how="left",
     )
     return merged
-

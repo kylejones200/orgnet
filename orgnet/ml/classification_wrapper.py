@@ -47,9 +47,7 @@ class SimpleGCNClassifier:
             num_classes: Number of classes
         """
         if not HAS_TORCH:
-            raise ImportError(
-                "PyTorch required. Install with: pip install torch torch-geometric"
-            )
+            raise ImportError("PyTorch required. Install with: pip install torch torch-geometric")
 
         self.hidden_dim = hidden_dim
         self.num_classes = num_classes
@@ -304,4 +302,3 @@ class Node2VecEmbedder:
 
         similar = self.model.wv.most_similar(node_id, topn=top_k)
         return [(node, score) for node, score in similar]
-

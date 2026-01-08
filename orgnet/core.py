@@ -376,17 +376,18 @@ class OrganizationalNetworkAnalyzer:
         # Get analysis results for tables
         centrality_results = self.centrality_results or {}
         community_results = self.community_results or {}
-        
+
         # Create network visualization link
         try:
             from orgnet.visualization.network import NetworkVisualizer
+
             visualizer = NetworkVisualizer(self.graph)
             network_viz_path = "network_visualization.html"
             visualizer.create_interactive_network(network_viz_path)
             network_map_section = f'<p><a href="{network_viz_path}" target="_blank">View Interactive Network Map</a></p>'
         except Exception:
-            network_map_section = '<p><em>Network visualization not available</em></p>'
-        
+            network_map_section = "<p><em>Network visualization not available</em></p>"
+
         html = f"""
 <!DOCTYPE html>
 <html>
@@ -455,7 +456,7 @@ class OrganizationalNetworkAnalyzer:
             <th>Top 5%</th>
         </tr>
 """
-        
+
         # Add centrality table
         if "betweenness" in centrality_results:
             betweenness_df = centrality_results["betweenness"]
@@ -469,7 +470,7 @@ class OrganizationalNetworkAnalyzer:
             <td class="top-flag">{top_flag}</td>
         </tr>
 """
-        
+
         html += """
     </table>
     
@@ -482,7 +483,7 @@ class OrganizationalNetworkAnalyzer:
             <th>Top 5%</th>
         </tr>
 """
-        
+
         if "degree" in centrality_results:
             degree_df = centrality_results["degree"]
             for idx, row in degree_df.head(20).iterrows():
@@ -495,7 +496,7 @@ class OrganizationalNetworkAnalyzer:
             <td class="top-flag">{top_flag}</td>
         </tr>
 """
-        
+
         html += """
     </table>
 
@@ -507,22 +508,22 @@ class OrganizationalNetworkAnalyzer:
             <th>Members (sample)</th>
         </tr>
 """
-        
+
         # Add community list
         if community_results and "communities" in community_results:
             communities = community_results["communities"]
             node_to_community = community_results.get("node_to_community", {})
-            
+
             # Group nodes by community
             comm_dict = {}
             for node, comm_id in node_to_community.items():
                 if comm_id not in comm_dict:
                     comm_dict[comm_id] = []
                 comm_dict[comm_id].append(node)
-            
+
             # Sort by size
             sorted_comms = sorted(comm_dict.items(), key=lambda x: len(x[1]), reverse=True)
-            
+
             for comm_id, members in sorted_comms[:20]:  # Top 20 communities
                 sample_members = ", ".join(members[:5])
                 if len(members) > 5:
@@ -534,13 +535,13 @@ class OrganizationalNetworkAnalyzer:
             <td>{sample_members}</td>
         </tr>
 """
-        
+
         html += """
     </table>
 
     <h2>Key Insights</h2>
 """
-        
+
         # Add key findings/insights
         for finding in executive_summary.get("key_findings", []):
             finding_class = finding.get("type", "info")
@@ -551,7 +552,7 @@ class OrganizationalNetworkAnalyzer:
         <p><strong>Recommendation:</strong> {finding['recommendation']}</p>
     </div>
 """
-        
+
         # Add top brokers as insight
         if executive_summary.get("top_brokers"):
             html += """
@@ -579,7 +580,7 @@ class OrganizationalNetworkAnalyzer:
         </table>
     </div>
 """
-        
+
         html += """
 </body>
 </html>

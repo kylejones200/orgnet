@@ -64,4 +64,3 @@ def standardize_metric_output(
     output_columns.extend(additional_cols)
 
     return df[output_columns]
-

@@ -85,14 +85,18 @@ class CrossTeamDensityTracker:
         after_metrics = self._compute_period_metrics(after_snapshots)
 
         # Calculate changes
-        density_change = after_metrics["avg_cross_team_density"] - before_metrics["avg_cross_team_density"]
+        density_change = (
+            after_metrics["avg_cross_team_density"] - before_metrics["avg_cross_team_density"]
+        )
         density_change_pct = (
             (density_change / before_metrics["avg_cross_team_density"] * 100)
             if before_metrics["avg_cross_team_density"] > 0
             else 0
         )
 
-        edge_count_change = after_metrics["total_cross_team_edges"] - before_metrics["total_cross_team_edges"]
+        edge_count_change = (
+            after_metrics["total_cross_team_edges"] - before_metrics["total_cross_team_edges"]
+        )
         edge_count_change_pct = (
             (edge_count_change / before_metrics["total_cross_team_edges"] * 100)
             if before_metrics["total_cross_team_edges"] > 0
@@ -178,9 +182,7 @@ class CrossTeamDensityTracker:
         avg_cross_team_density = (
             sum(cross_team_densities) / len(cross_team_densities) if cross_team_densities else 0.0
         )
-        cross_team_ratio = (
-            total_cross_team_edges / total_edges if total_edges > 0 else 0.0
-        )
+        cross_team_ratio = total_cross_team_edges / total_edges if total_edges > 0 else 0.0
 
         return {
             "avg_cross_team_density": avg_cross_team_density,
@@ -349,4 +351,3 @@ class CrossTeamDensityTracker:
             )
 
         return pd.DataFrame(density_data)
-

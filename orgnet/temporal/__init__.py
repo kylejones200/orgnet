@@ -13,6 +13,7 @@ try:
         person_temporal_features,
         merge_edge_temporal_features,
     )
+
     __all__ = [
         "ChangeDetector",
         "OnboardingAnalyzer",

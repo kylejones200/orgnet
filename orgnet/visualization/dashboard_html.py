@@ -253,4 +253,3 @@ def generate_dashboard_html(
 
     logger.info(f"Dashboard saved to {output_path}")
     return output_path
-

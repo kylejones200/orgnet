@@ -13,6 +13,7 @@ from orgnet.data.models import Person
 
 class MockPerson:
     """Mock person for testing."""
+
     def __init__(self, id, name, department, role, start_date):
         self.id = id
         self.name = name
@@ -28,12 +29,12 @@ def test_new_hire_integration_tracking():
         MockPerson("p1", "Alice", "Engineering", "Engineer", datetime(2024, 1, 1)),
         MockPerson("p2", "Bob", "Product", "Manager", datetime(2023, 6, 1)),
     ]
-    
+
     config = Config()
     temporal_graph = TemporalGraph(config)
-    
+
     tracker = NewHireIntegrationTracker(temporal_graph, people, [])
-    
+
     # Test tracking (will fail if temporal graph not properly set up, but tests structure)
     try:
         integration_df = tracker.track_integration("p1", window_days=90)
@@ -41,12 +42,30 @@ def test_new_hire_integration_tracking():
     except Exception:
         # Expected if graph not built, but structure is correct
         pass
-    
+
     # Test narrative generation
     try:
         narrative = tracker.generate_integration_narrative(
-            type('obj', (object,), {'iloc': [type('obj', (object,), {'__getitem__': lambda x: type('obj', (object,), {'integration_score': 0.5, 'status': 'on_track', 'week': 1})()})]()})(),
-            "p1"
+            type(
+                "obj",
+                (object,),
+                {
+                    "iloc": [
+                        type(
+                            "obj",
+                            (object,),
+                            {
+                                "__getitem__": lambda x: type(
+                                    "obj",
+                                    (object,),
+                                    {"integration_score": 0.5, "status": "on_track", "week": 1},
+                                )()
+                            },
+                        )
+                    ]()
+                },
+            )(),
+            "p1",
         )
         assert "summary" in narrative
         assert "recommendation" in narrative
@@ -60,12 +79,12 @@ def test_cross_team_density_tracking():
         MockPerson("p1", "Alice", "Engineering", "Engineer", datetime(2024, 1, 1)),
         MockPerson("p2", "Bob", "Product", "Manager", datetime(2023, 6, 1)),
     ]
-    
+
     config = Config()
     temporal_graph = TemporalGraph(config)
-    
+
     tracker = CrossTeamDensityTracker(temporal_graph, people, [], team_attribute="department")
-    
+
     # Test structure (will fail if graph not built, but tests API)
     event_date = datetime(2024, 2, 1)
     try:
@@ -75,7 +94,7 @@ def test_cross_team_density_tracking():
         assert "change" in metrics
     except Exception:
         pass
-    
+
     # Test narrative generation
     sample_metrics = {
         "event_date": event_date.isoformat(),
@@ -87,4 +106,3 @@ def test_cross_team_density_tracking():
     assert "summary" in narrative
     assert "hypothesis" in narrative
     assert "intervention" in narrative
-

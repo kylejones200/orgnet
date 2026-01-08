@@ -24,6 +24,7 @@ from orgnet.utils.logging import get_logger
 
 try:
     from orgnet.temporal.ts2net import features_for_series, Ts2NetConfig
+
     HAS_TS2NET = True
 except ImportError:
     HAS_TS2NET = False
@@ -165,9 +166,7 @@ def build_person_time_table(
     return person_period_df
 
 
-def _find_snapshot_for_period(
-    snapshots: List[Dict], target_date: datetime
-) -> Optional[Dict]:
+def _find_snapshot_for_period(snapshots: List[Dict], target_date: datetime) -> Optional[Dict]:
     """Find the snapshot closest to but not after target_date."""
     valid_snapshots = [s for s in snapshots if s["timestamp"] <= target_date]
     if not valid_snapshots:
@@ -306,7 +305,9 @@ def fit_survival_model(
         ]
 
     if not feature_cols:
-        raise ValueError("No feature columns found. Specify feature_cols or ensure numeric columns exist.")
+        raise ValueError(
+            "No feature columns found. Specify feature_cols or ensure numeric columns exist."
+        )
 
     logger.info(f"Fitting {model_type} survival model with {len(feature_cols)} features")
 
@@ -380,4 +381,3 @@ def compute_hazard_flags(
         )
 
     return df
-

@@ -48,7 +48,7 @@ def test_analyze(sample_people, sample_interactions):
     assert "centrality" in results
     assert "communities" in results
     assert "constraint" in results or "brokers" in results
-    
+
     # Check standardized outputs
     if "betweenness" in results["centrality"]:
         betweenness_df = results["centrality"]["betweenness"]
@@ -60,15 +60,15 @@ def test_generate_report(sample_people, sample_interactions):
     analyzer = OrganizationalNetworkAnalyzer()
     analyzer.people = sample_people
     analyzer.interactions = sample_interactions
-    
+
     analyzer.build_graph()
     analyzer.analyze()
-    
+
     report_path = "test_report_output.html"
     try:
         path = analyzer.generate_report(report_path)
         assert os.path.exists(path)
-        
+
         # Check report content
         with open(path, "r") as f:
             content = f.read()
@@ -82,11 +82,11 @@ def test_generate_report(sample_people, sample_interactions):
 def test_load_data():
     """Test load_data method structure."""
     analyzer = OrganizationalNetworkAnalyzer()
-    
+
     # Test with empty data paths
     analyzer.load_data({})
     assert analyzer.people == []
-    
+
     # Test structure (won't actually load files, but tests method exists)
     assert hasattr(analyzer, "load_data")
 
@@ -96,10 +96,10 @@ def test_standardized_metrics(sample_people, sample_interactions):
     analyzer = OrganizationalNetworkAnalyzer()
     analyzer.people = sample_people
     analyzer.interactions = sample_interactions
-    
+
     analyzer.build_graph()
     results = analyzer.analyze(standardize_outputs=True)
-    
+
     # Check centrality metrics have standardized format
     if "betweenness" in results["centrality"]:
         df = results["centrality"]["betweenness"]

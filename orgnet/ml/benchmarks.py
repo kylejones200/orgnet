@@ -16,12 +16,14 @@ from orgnet.utils.logging import get_logger
 try:
     from sklearn.metrics import accuracy_score, roc_auc_score, classification_report
     from sklearn.model_selection import train_test_split
+
     HAS_SKLEARN = True
 except ImportError:
     HAS_SKLEARN = False
 
 try:
     from orgnet.ml.classification_wrapper import SimpleGCNClassifier, Node2VecEmbedder
+
     HAS_ML = True
 except ImportError:
     HAS_ML = False
@@ -216,9 +218,7 @@ def benchmark_gcn_classifier(
 
         # Fit model
         classifier = SimpleGCNClassifier(hidden_dim=hidden_dim, num_classes=2)
-        classifier.fit(
-            graph, node_features, labels, train_nodes=train_nodes, epochs=epochs
-        )
+        classifier.fit(graph, node_features, labels, train_nodes=train_nodes, epochs=epochs)
 
         # Predict
         predictions = classifier.predict(graph, node_features)
@@ -307,4 +307,3 @@ if __name__ == "__main__":
     results = run_all_benchmarks(num_people=100, num_edges=500, output_path="ml_benchmarks.csv")
     print("\nBenchmark Results:")
     print(results.to_string())
-

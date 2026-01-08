@@ -22,7 +22,9 @@ class CentralityAnalyzer:
         """
         self.graph = graph
 
-    def compute_all_centralities(self, top_n: int = 20, standardize: bool = True) -> Dict[str, pd.DataFrame]:
+    def compute_all_centralities(
+        self, top_n: int = 20, standardize: bool = True
+    ) -> Dict[str, pd.DataFrame]:
         """
         Compute all centrality measures.
 
@@ -146,7 +148,9 @@ class CentralityAnalyzer:
                 df, value_column="betweenness_centrality", id_column="node_id", top_n=top_n
             )
 
-        return df.sort_values("betweenness_centrality" if not standardize else "value", ascending=False)
+        return df.sort_values(
+            "betweenness_centrality" if not standardize else "value", ascending=False
+        )
 
     def compute_eigenvector_centrality(
         self, max_iter: int = 100, standardize: bool = True, top_n: Optional[int] = None
@@ -190,7 +194,9 @@ class CentralityAnalyzer:
                 df, value_column="eigenvector_centrality", id_column="node_id", top_n=top_n
             )
 
-        return df.sort_values("eigenvector_centrality" if not standardize else "value", ascending=False)
+        return df.sort_values(
+            "eigenvector_centrality" if not standardize else "value", ascending=False
+        )
 
     def compute_closeness_centrality(
         self, standardize: bool = True, top_n: Optional[int] = None
@@ -234,7 +240,9 @@ class CentralityAnalyzer:
                 df, value_column="closeness_centrality", id_column="node_id", top_n=top_n
             )
 
-        return df.sort_values("closeness_centrality" if not standardize else "value", ascending=False)
+        return df.sort_values(
+            "closeness_centrality" if not standardize else "value", ascending=False
+        )
 
     def compute_pagerank(
         self, damping: float = 0.85, standardize: bool = True, top_n: Optional[int] = None

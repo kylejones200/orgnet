@@ -159,6 +159,7 @@ def create_app(config_path: Optional[str] = None):
             # Build temporal snapshots if available
             if analyzer.temporal_graph is None:
                 from orgnet.graph.temporal import TemporalGraph
+
                 analyzer.temporal_graph = TemporalGraph(analyzer.config)
 
             # Get snapshots

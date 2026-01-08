@@ -38,7 +38,10 @@ class EdgeWeightCalculator:
         self.processor = DataProcessor()
 
     def compute_communication_weights(
-        self, interactions: list[Interaction], now: Optional[datetime] = None, people: Optional[List] = None
+        self,
+        interactions: list[Interaction],
+        now: Optional[datetime] = None,
+        people: Optional[List] = None,
     ) -> pd.DataFrame:
         """
         Compute communication edge weights using the configured weight scheme.
@@ -108,7 +111,10 @@ class EdgeWeightCalculator:
         return weighted_matrix
 
     def _apply_role_based_weights(
-        self, interactions: list[Interaction], freq_matrix: pd.DataFrame, people: Optional[List] = None
+        self,
+        interactions: list[Interaction],
+        freq_matrix: pd.DataFrame,
+        people: Optional[List] = None,
     ) -> pd.DataFrame:
         """Apply role-based weights to interactions."""
         if people is None:
@@ -129,8 +135,12 @@ class EdgeWeightCalculator:
                 role_i = role_lookup.get(i, "default")
                 role_j = role_lookup.get(j, "default")
 
-                weight_i = self.role_weights.get(role_i.lower(), self.role_weights.get("default", 1.0))
-                weight_j = self.role_weights.get(role_j.lower(), self.role_weights.get("default", 1.0))
+                weight_i = self.role_weights.get(
+                    role_i.lower(), self.role_weights.get("default", 1.0)
+                )
+                weight_j = self.role_weights.get(
+                    role_j.lower(), self.role_weights.get("default", 1.0)
+                )
 
                 # Average role weights
                 role_weight = (weight_i + weight_j) / 2.0

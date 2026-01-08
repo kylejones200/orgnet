@@ -75,7 +75,9 @@ class GraphBuilder:
         layers = {}
 
         if interactions:
-            comm_weights = self.weight_calculator.compute_communication_weights(interactions, people=people)
+            comm_weights = self.weight_calculator.compute_communication_weights(
+                interactions, people=people
+            )
             layers["communication"] = comm_weights
 
         if meetings:
@@ -136,7 +138,9 @@ class GraphBuilder:
             )
 
         if interactions:
-            comm_weights = self.weight_calculator.compute_communication_weights(interactions, people=people)
+            comm_weights = self.weight_calculator.compute_communication_weights(
+                interactions, people=people
+            )
 
             for i in comm_weights.index:
                 for j in comm_weights.columns:
@@ -186,7 +190,9 @@ class GraphBuilder:
 
         if interactions:
             G_comm = base_G.copy()
-            comm_weights = self.weight_calculator.compute_communication_weights(interactions, people=people)
+            comm_weights = self.weight_calculator.compute_communication_weights(
+                interactions, people=people
+            )
             self._add_edges_from_matrix(G_comm, comm_weights)
             graphs["communication"] = G_comm
 

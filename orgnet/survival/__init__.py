@@ -29,4 +29,3 @@ __all__ = [
     "score_hazard",
     "compute_hazard_flags",
 ]
-

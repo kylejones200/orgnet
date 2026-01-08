@@ -235,7 +235,9 @@ class StructuralAnalyzer:
                 df, value_column="clustering_coefficient", id_column="node_id", top_n=top_n
             )
 
-        return df.sort_values("clustering_coefficient" if not standardize else "value", ascending=False)
+        return df.sort_values(
+            "clustering_coefficient" if not standardize else "value", ascending=False
+        )
 
     def detect_bridge_nodes(
         self, communities: Optional[Dict] = None, min_betweenness: float = 0.1, method: str = "both"

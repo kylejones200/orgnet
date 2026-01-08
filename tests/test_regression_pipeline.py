@@ -105,15 +105,20 @@ def compute_pipeline_hash(results: dict) -> str:
         "num_edges": results.get("graph", {}).get("num_edges", 0),
         "num_communities": results.get("communities", {}).get("num_communities", 0),
         "modularity": round(results.get("communities", {}).get("modularity", 0), 4),
-        "top_betweenness": [
-            {
-                "node_id": row.get("node_id"),
-                "value": round(row.get("value", row.get("betweenness_centrality", 0)), 4),
-            }
-            for _, row in results.get("centrality", {}).get("betweenness", pd.DataFrame()).head(3).iterrows()
-        ]
-        if "betweenness" in results.get("centrality", {})
-        else [],
+        "top_betweenness": (
+            [
+                {
+                    "node_id": row.get("node_id"),
+                    "value": round(row.get("value", row.get("betweenness_centrality", 0)), 4),
+                }
+                for _, row in results.get("centrality", {})
+                .get("betweenness", pd.DataFrame())
+                .head(3)
+                .iterrows()
+            ]
+            if "betweenness" in results.get("centrality", {})
+            else []
+        ),
     }
 
     summary_str = json.dumps(summary, sort_keys=True)
@@ -190,7 +195,9 @@ def test_pipeline_metrics_structure(tiny_org_data):
     if "betweenness" in centrality:
         betweenness_df = centrality["betweenness"]
         assert "node_id" in betweenness_df.columns
-        assert "value" in betweenness_df.columns or "betweenness_centrality" in betweenness_df.columns
+        assert (
+            "value" in betweenness_df.columns or "betweenness_centrality" in betweenness_df.columns
+        )
 
 
 def test_report_generation_consistency(tiny_org_data):
@@ -229,4 +236,3 @@ def test_report_generation_consistency(tiny_org_data):
         for path in [report_path, report_path + ".2"]:
             if os.path.exists(path):
                 os.remove(path)
-
