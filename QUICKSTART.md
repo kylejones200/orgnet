@@ -17,7 +17,7 @@ Get started with the Organizational Network Analysis platform in minutes.
 
 3. **Install dependencies**
    ```bash
-   pip install -r requirements.txt
+   uv sync --all-extras   # or: pip install -e ".[all]"
    ```
 
 4. **Download spaCy language model** (for NLP features)
@@ -68,23 +68,6 @@ analyzer.generate_report('report.html')
 python example.py
 ```
 
-### 3. Start API Server
-
-```bash
-python -m orgnet.api.app
-```
-
-The API will be available at `http://localhost:5000`
-
-**API Endpoints:**
-- `GET /api/health` - Health check
-- `GET /api/graph` - Get graph data
-- `GET /api/metrics` - Get network metrics
-- `GET /api/communities` - Get community detection results
-- `GET /api/insights` - Get organizational insights
-- `POST /api/load_data` - Load data files
-- `POST /api/build_graph` - Build graph
-
 ## Configuration
 
 Edit `config.yaml` to customize:
@@ -93,7 +76,6 @@ Edit `config.yaml` to customize:
 - **Graph construction**: Adjust edge weight parameters
 - **Analysis settings**: Choose community detection method, number of topics, etc.
 - **Privacy settings**: Configure data retention and anonymization
-- **API settings**: Configure server host and port
 
 ## Example Workflow
 

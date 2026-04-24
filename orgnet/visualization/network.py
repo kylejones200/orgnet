@@ -1,9 +1,11 @@
 """Network visualization utilities."""
 
 import networkx as nx
-import pandas as pd
 import numpy as np
+import pandas as pd
 from typing import Dict, Optional
+
+from orgnet.visualization.layouts import graph_layout_positions, pyvis_physics_options_json
 
 try:
     import matplotlib.pyplot as plt
@@ -12,11 +14,6 @@ try:
 except ImportError:
     HAS_MATPLOTLIB = False
     plt = None
-
-try:
-    HAS_PLOTLY = True
-except ImportError:
-    HAS_PLOTLY = False
 
 try:
     from pyvis.network import Network
@@ -38,19 +35,28 @@ class NetworkVisualizer:
         """
         self.graph = graph
 
+    def create_layout_positions(
+        self,
+        layout: str = "spring",
+        *,
+        weight: Optional[str] = "weight",
+        **kwargs,
+    ) -> Dict:
+        """
+        Compute node positions using :func:`orgnet.visualization.layouts.graph_layout_positions`.
+
+        For ``spring`` layout, ``kwargs`` may include ``k`` and ``iterations`` (passed to
+        NetworkX ``spring_layout``).
+        """
+        g = self.graph
+        name = (layout or "spring").lower()
+        if name == "spring":
+            return graph_layout_positions(g, "spring", weight=weight, **kwargs)
+        return graph_layout_positions(g, layout, **kwargs)
+
     def create_force_directed_layout(self, k: float = 1.0, iterations: int = 50) -> Dict:
-        """
-        Create force-directed layout positions.
-
-        Args:
-            k: Optimal distance between nodes
-            iterations: Number of iterations
-
-        Returns:
-            Dictionary mapping node_id to (x, y) position
-        """
-        pos = nx.spring_layout(self.graph, k=k, iterations=iterations, weight="weight")
-        return pos
+        """Backward-compatible alias for spring layout."""
+        return self.create_layout_positions("spring", k=k, iterations=iterations, weight="weight")
 
     def visualize_network(
         self,
@@ -60,17 +66,25 @@ class NetworkVisualizer:
         centrality_df: Optional[pd.DataFrame] = None,
         title: str = "Organizational Network",
         figsize: tuple = (12, 10),
+        layout: str = "spring",
+        node_cmap: str = "viridis",
+        edge_color: str = "#cccccc",
+        edge_width: float = 0.5,
     ):
         """
         Create matplotlib network visualization.
 
         Args:
-            pos: Node positions (if None, uses spring layout)
-            node_color: Node attribute to color by
-            node_size: Node attribute to size by
+            pos: Node positions (if None, computed via ``layout``)
+            node_color: Centrality column name to color by
+            node_size: Centrality column name to size by
             centrality_df: DataFrame with centrality metrics
             title: Plot title
             figsize: Figure size
+            layout: Layout name for :func:`orgnet.visualization.layouts.graph_layout_positions`
+            node_cmap: Matplotlib colormap name when ``node_color`` is used
+            edge_color: Edge stroke color
+            edge_width: Edge width
 
         Returns:
             Matplotlib figure
@@ -81,7 +95,7 @@ class NetworkVisualizer:
             )
 
         if pos is None:
-            pos = self.create_force_directed_layout()
+            pos = self.create_layout_positions(layout)
 
         fig, ax = plt.subplots(figsize=figsize)
 
@@ -110,11 +124,27 @@ class NetworkVisualizer:
             node_sizes = 300
 
         # Draw network
-        nx.draw_networkx_nodes(
-            self.graph, pos, node_color=node_colors, node_size=node_sizes, alpha=0.7, ax=ax
-        )
+        node_draw_kw = {
+            "node_color": node_colors,
+            "node_size": node_sizes,
+            "alpha": 0.7,
+            "ax": ax,
+        }
+        if isinstance(node_colors, list):
+            import matplotlib as mpl
 
-        nx.draw_networkx_edges(self.graph, pos, alpha=0.2, width=0.5, ax=ax)
+            node_draw_kw["cmap"] = mpl.colormaps[node_cmap]
+
+        nx.draw_networkx_nodes(self.graph, pos, **node_draw_kw)
+
+        nx.draw_networkx_edges(
+            self.graph,
+            pos,
+            alpha=0.35,
+            width=edge_width,
+            edge_color=edge_color,
+            ax=ax,
+        )
 
         # Labels (only for important nodes)
         if centrality_df is not None:
@@ -135,6 +165,7 @@ class NetworkVisualizer:
         centrality_df: Optional[pd.DataFrame] = None,
         height: str = "800px",
         width: str = "100%",
+        physics_preset: str = "default",
     ) -> str:
         """
         Create interactive network visualization using Pyvis.
@@ -146,6 +177,7 @@ class NetworkVisualizer:
             centrality_df: DataFrame with centrality metrics
             height: Height of visualization
             width: Width of visualization
+            physics_preset: Pyvis physics bundle name (``default``, ``compact``, ``spacious``).
 
         Returns:
             Path to saved HTML file
@@ -184,21 +216,7 @@ class NetworkVisualizer:
             weight = data.get("weight", 1.0)
             net.add_edge(u, v, value=weight, width=weight * 2)
 
-        # Configure physics
-        net.set_options(
-            """
-        {
-          "physics": {
-            "barnesHut": {
-              "gravitationalConstant": -2000,
-              "centralGravity": 0.1,
-              "springLength": 100,
-              "springConstant": 0.05
-            }
-          }
-        }
-        """
-        )
+        net.set_options(pyvis_physics_options_json(physics_preset))
 
         net.save_graph(output_path)
         return output_path

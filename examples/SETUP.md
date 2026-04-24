@@ -7,9 +7,11 @@
 pip install faker jupyter pandas matplotlib
 ```
 
-Or install all dependencies:
+Or install the full project from the repo root:
 ```bash
-pip install -r requirements.txt
+cd ..
+uv sync --all-extras
+# or: pip install -e ".[all]"
 ```
 
 ## Step 2: Generate Sample Data

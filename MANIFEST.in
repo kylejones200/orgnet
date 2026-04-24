@@ -1,7 +1,7 @@
 include README.md
 include LICENSE
 include pyproject.toml
-include requirements.txt
+include uv.lock
 include setup.py
 recursive-include orgnet *.py
 recursive-exclude * __pycache__

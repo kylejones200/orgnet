@@ -9,11 +9,11 @@ This directory contains example notebooks and sample data generation scripts to 
 First, make sure you have the required packages:
 
 ```bash
-# Install orgnet and dependencies
-pip install -r ../requirements.txt
+# From repository root — full stack (matches historical flat install)
+uv sync --all-extras
 
-# Or install just what you need for examples
-pip install faker jupyter pandas matplotlib
+# Or from repo root, examples extras only
+pip install -e ".[examples]"
 ```
 
 ### 2. Generate Sample Data

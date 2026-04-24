@@ -15,7 +15,7 @@ Create interactive network visualizations:
    # Create interactive HTML visualization
    viz_path = visualizer.create_interactive_network("network.html")
 
-Note: Visualization requires optional dependencies. Install with:
+Note: Visualization optional dependencies include Matplotlib, Seaborn, PlotSmith (for styled static charts on Python 3.12+), and Pyvis (interactive network HTML). Plotly is not used.
 
 .. code-block:: bash
 

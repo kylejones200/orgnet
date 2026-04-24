@@ -13,5 +13,4 @@ Complete API documentation for all modules and classes.
    nlp
    temporal
    visualization
-   api
 

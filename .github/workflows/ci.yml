@@ -17,6 +17,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Clone NetSmith sibling (ONA Python under ../netsmith/src)
+        run: |
+          git clone --depth 1 https://github.com/kylejones200/netsmith.git "${GITHUB_WORKSPACE}/../netsmith"
       
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -27,20 +31,20 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          # Install core dependencies (skip graph-tool which requires system deps)
-          pip install numpy pandas networkx scipy scikit-learn pytest pytest-cov black flake8
-          # Install optional dependencies that are available
+          pip install pytest pytest-cov black flake8
+          pip install -e ".[three-es,export]" || { echo "editable install failed"; exit 1; }
+          # Install optional dependencies that are available (beyond three-es)
           pip install python-igraph node2vec || echo "Optional graph packages not available, continuing..."
           pip install torch torch-geometric || echo "Optional ML packages not available, continuing..."
           pip install transformers sentence-transformers || echo "Optional transformers not available, continuing..."
       
       - name: Check code formatting with black
         run: |
-          black --check orgnet/ tests/ example.py setup.py --line-length 100
+          black --check orgnet/ tests/ example.py setup.py scripts/three_es_examples.py --line-length 100
       
       - name: Lint with flake8
         run: |
-          flake8 orgnet/ tests/ example.py setup.py --max-line-length=100 --ignore=E203,W503,E501 --count --show-source --statistics
+          flake8 orgnet/ tests/ example.py setup.py scripts/three_es_examples.py --max-line-length=100 --ignore=E203,W503,E501 --count --show-source --statistics
       
       - name: Run tests
         run: |
@@ -110,7 +114,8 @@ jobs:
       
       - name: Install built package
         run: |
-          pip install dist/orgnet-*.whl
+          WHL=$(ls dist/orgnet-*.whl | head -n1)
+          pip install "${WHL}[three-es,export]"
       
       - name: Test package imports
         run: |
@@ -118,6 +123,6 @@ jobs:
           python -c "from orgnet.core import OrganizationalNetworkAnalyzer; print('✓ OrganizationalNetworkAnalyzer imported')"
           python -c "from orgnet.graph import GraphBuilder; print('✓ GraphBuilder imported')"
           python -c "from orgnet.metrics import CentralityAnalyzer; print('✓ CentralityAnalyzer imported')"
-          python -c "from orgnet.api import create_app; print('✓ create_app imported (optional)')" || echo "⚠ API module requires Flask (optional dependency)"
-          python -c "import orgnet.data; import orgnet.graph; import orgnet.metrics; import orgnet.ml; import orgnet.nlp; import orgnet.temporal; import orgnet.utils; import orgnet.visualization; print('✓ All modules imported successfully')"
+          python -c "import orgnet.data; import orgnet.graph; import orgnet.metrics; import orgnet.ml; import orgnet.nlp; import orgnet.temporal; import orgnet.utils; import orgnet.visualization; print('✓ All orgnet modules imported successfully')"
+          python -c "import orgnet.three_es; from orgnet.three_es import ThreeEsCalculator, NetworkAnalyzer; print('✓ orgnet.three_es imported successfully')"
 

@@ -67,20 +67,25 @@ nlp = [
     "gensim>=4.3.0",
 ]
 viz = [
-    "matplotlib>=3.7.0",
+    "matplotlib>=3.7.0,<4.0.0",
     "seaborn>=0.12.0",
-    "plotly>=5.14.0",
+    "plotsmith>=0.2.0; python_version>='3.12'",
     "pyvis>=0.3.2",
-    "dash>=2.10.0",
-    "dash-bootstrap-components>=1.4.0",
 ]
 temporal = [
     "ruptures>=1.1.8",
 ]
-api = [
-    "flask>=2.3.0",
-    "flask-cors>=4.0.0",
-    "gunicorn>=21.0.0",
+# three-es: NetSmith is a separate package/repo. For ONA Python APIs, use a sibling checkout
+# ``../netsmith`` or set NETSMITH_ROOT to that repo (tests/scripts prepend ``<root>/src``).
+three-es = [
+    "SQLAlchemy>=2.0.23",
+    "alembic>=1.13.1",
+    "python-dotenv>=1.0.0",
+    "anomsmith @ git+https://github.com/kylejones200/anomsmith.git@main",
+]
+three-es-viz = [
+    "plotsmith>=0.2.0; python_version>='3.12'",
+    "matplotlib>=3.7.0",
 ]
 dev = [
     "pytest>=7.0.0",
@@ -94,7 +99,31 @@ docs = [
     "myst-parser>=1.0.0",
 ]
 all = [
-    "orgnet[graph,ml,nlp,viz,temporal,api]",
+    "orgnet[graph,ml,nlp,viz,temporal,three-es,export,stats,mlops,data,examples,auth]",
+]
+export = [
+    "openpyxl>=3.1.0",
+    "reportlab>=4.0.0",
+    "python-pptx>=0.6.21",
+]
+stats = [
+    "statsmodels>=0.14.0",
+]
+mlops = [
+    "mlflow>=2.0.0",
+]
+data = [
+    "polars>=0.19.0",
+    "pyarrow>=12.0.0",
+    "fastparquet>=2023.4.0",
+    "numba>=0.58.0",
+]
+examples = [
+    "faker>=19.0.0",
+    "jupyter>=1.0.0",
+]
+auth = [
+    "PyJWT>=2.8.0",
 ]
 
 [project.urls]
@@ -103,11 +132,9 @@ Documentation = "https://github.com/kylejones200/orgnet#readme"
 Repository = "https://github.com/kylejones200/orgnet"
 Issues = "https://github.com/kylejones200/orgnet/issues"
 
-[project.scripts]
-orgnet-api = "orgnet.api.app:main"
-
-[tool.setuptools]
-packages = ["orgnet", "orgnet.api", "orgnet.data", "orgnet.graph", "orgnet.insights", "orgnet.metrics", "orgnet.ml", "orgnet.nlp", "orgnet.temporal", "orgnet.utils", "orgnet.visualization"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["orgnet*"]
 
 [tool.setuptools.package-data]
 orgnet = ["py.typed"]

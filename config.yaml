@@ -118,10 +118,3 @@ visualization:
   color_by: "department"
   size_by: "betweenness"
 
-# API Settings
-api:
-  host: "0.0.0.0"
-  port: 5000
-  debug: false
-  cors_enabled: true
-

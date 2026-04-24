@@ -18,22 +18,25 @@ A comprehensive Python application for analyzing organizational networks using m
 - **Cross-Modal Validation**: Validates insights across different data sources
 - **Team Stability Analysis**: Time-Size Paradox analysis for team retention and stability
 - **Bonding/Bridging Analysis**: Analyzes within-group (bonding) vs between-group (bridging) connections
-- **Interactive Dashboards**: Web-based visualization and reporting
+- **Reporting**: HTML reports and static or interactive network views (Pyvis, etc.)
 - **Privacy-First**: Built with privacy and ethics considerations
 
 ## Installation
 
+Dependencies are declared in `pyproject.toml` and pinned in **`uv.lock`**. Use [uv](https://docs.astral.sh/uv/) for reproducible installs, or install with pip and extras as usual.
+
 ```bash
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Option A: uv (recommended — uses uv.lock)
+uv sync --all-extras
 
-# Install dependencies
-pip install -r requirements.txt
+# Option B: pip editable install with optional stacks
+pip install -e ".[all]"
 
-# Download spaCy language model
+# Download spaCy language model (NLP extra)
 python -m spacy download en_core_web_sm
 ```
+
+Core-only install: `uv sync` or `pip install -e .`. After changing dependencies in `pyproject.toml`, refresh the lockfile with `uv lock` and commit `uv.lock`.
 
 ## Quick Start
 
@@ -135,12 +138,9 @@ ONA/
 │   │   ├── __init__.py
 │   │   ├── network.py          # Network visualizations
 │   │   └── dashboards.py       # Dashboard components
-│   └── api/
-│       ├── __init__.py
-│       ├── app.py              # Flask API
-│       └── routes.py           # API routes
 ├── config.yaml                 # Configuration file
-├── requirements.txt            # Python dependencies
+├── pyproject.toml              # Package metadata and optional dependency groups
+├── uv.lock                     # Resolved dependency lockfile (uv)
 └── README.md                   # This file
 ```
 
@@ -151,22 +151,6 @@ Edit `config.yaml` to configure:
 - Graph construction parameters
 - Analysis preferences
 - Privacy settings
-- API configuration
-
-## API Usage
-
-Start the API server:
-
-```bash
-python -m orgnet.api.app
-```
-
-The API provides endpoints for:
-- `/api/graph` - Get organizational graph
-- `/api/metrics` - Compute network metrics
-- `/api/communities` - Community detection
-- `/api/insights` - Generate insights
-- `/api/visualization` - Get visualization data
 
 ## Privacy & Ethics
 

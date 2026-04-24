@@ -1,14 +1,16 @@
 """Graph Neural Networks for organizational networks."""
 
+from __future__ import annotations
+
 import networkx as nx
-from typing import Optional, Dict
+from typing import Dict, Literal, Optional
 
 try:
     import torch
     import torch.nn as nn
     import torch.nn.functional as F
-    from torch_geometric.nn import GCNConv, GATConv
     from torch_geometric.data import Data
+    from torch_geometric.nn import GATConv, GATv2Conv, GCNConv, SAGEConv
 
     HAS_TORCH = True
 except ImportError:
@@ -19,7 +21,11 @@ except ImportError:
     F = None
     GCNConv = None
     GATConv = None
+    GATv2Conv = None
+    SAGEConv = None
     Data = None
+
+GNNArchitecture = Literal["gcn", "gat", "graphsage", "gatv2"]
 
 
 if HAS_TORCH:
@@ -103,6 +109,62 @@ if HAS_TORCH:
             x = self.conv2(x, edge_index, edge_weight)
             return x
 
+    class OrgGraphSAGE(nn.Module):
+        """GraphSAGE-style model (mean aggregation) for organizational networks."""
+
+        def __init__(
+            self,
+            in_channels: int,
+            hidden_channels: int,
+            out_channels: int,
+            normalize: bool = True,
+        ):
+            super().__init__()
+            self.conv1 = SAGEConv(in_channels, hidden_channels, aggr="mean", normalize=normalize)
+            self.conv2 = SAGEConv(hidden_channels, out_channels, aggr="mean", normalize=normalize)
+
+        def forward(self, x, edge_index, edge_weight=None):
+            # SAGEConv supports edge_weight on recent PyG; ignore if caller passes None only
+            if edge_weight is not None:
+                x = self.conv1(x, edge_index, edge_weight)
+            else:
+                x = self.conv1(x, edge_index)
+            x = F.relu(x)
+            if edge_weight is not None:
+                x = self.conv2(x, edge_index, edge_weight)
+            else:
+                x = self.conv2(x, edge_index)
+            return x
+
+    class OrgGATv2(nn.Module):
+        """Graph Attention Network v2 (dynamic attention) for organizational networks."""
+
+        def __init__(
+            self,
+            in_channels: int,
+            hidden_channels: int,
+            out_channels: int,
+            heads: int = 4,
+        ):
+            super().__init__()
+            self.conv1 = GATv2Conv(in_channels, hidden_channels, heads=heads, dropout=0.1)
+            self.conv2 = GATv2Conv(
+                hidden_channels * heads,
+                out_channels,
+                heads=1,
+                concat=False,
+                dropout=0.1,
+            )
+
+        def forward(self, x, edge_index, edge_weight=None):
+            ea = edge_weight
+            if ea is not None and ea.dim() == 1:
+                ea = ea.unsqueeze(-1)
+            x = self.conv1(x, edge_index, edge_attr=ea)
+            x = F.relu(x)
+            x = self.conv2(x, edge_index, edge_attr=ea)
+            return x
+
 else:
     # Dummy classes when PyTorch is not available
     class OrgGCN:
@@ -120,6 +182,57 @@ else:
             raise ImportError(
                 "PyTorch and PyTorch Geometric required. Install with: pip install torch torch-geometric"
             )
+
+    class OrgGraphSAGE:
+        def __init__(self, *args, **kwargs):
+            raise ImportError(
+                "PyTorch and PyTorch Geometric required. Install with: pip install torch torch-geometric"
+            )
+
+    class OrgGATv2:
+        def __init__(self, *args, **kwargs):
+            raise ImportError(
+                "PyTorch and PyTorch Geometric required. Install with: pip install torch torch-geometric"
+            )
+
+
+def build_org_gnn(
+    architecture: GNNArchitecture,
+    in_channels: int,
+    hidden_channels: int,
+    out_channels: int,
+    *,
+    heads: int = 4,
+    sage_normalize: bool = True,
+) -> "nn.Module":
+    """
+    Construct a graph neural network by name.
+
+    Args:
+        architecture: One of ``gcn``, ``gat``, ``graphsage``, ``gatv2``.
+        in_channels: Input feature size per node.
+        hidden_channels: Hidden width.
+        out_channels: Output embedding size per node.
+        heads: Attention heads for GAT / GATv2.
+        sage_normalize: L2-normalize after GraphSAGE layers (PyG ``normalize`` flag).
+
+    Returns:
+        A ``torch.nn.Module`` accepting ``(x, edge_index, edge_weight=None)``.
+    """
+    if not HAS_TORCH:
+        raise ImportError(
+            "PyTorch and PyTorch Geometric required. Install with: pip install torch torch-geometric"
+        )
+    arch = architecture.lower()
+    if arch == "gcn":
+        return OrgGCN(in_channels, hidden_channels, out_channels)
+    if arch == "gat":
+        return OrgGAT(in_channels, hidden_channels, out_channels, heads=heads)
+    if arch == "graphsage":
+        return OrgGraphSAGE(in_channels, hidden_channels, out_channels, normalize=sage_normalize)
+    if arch == "gatv2":
+        return OrgGATv2(in_channels, hidden_channels, out_channels, heads=heads)
+    raise ValueError(f"Unknown architecture: {architecture!r}. Use gcn, gat, graphsage, gatv2.")
 
 
 def graph_to_pyg_data(graph: nx.Graph, node_features: Optional[Dict] = None):

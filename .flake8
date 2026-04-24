@@ -15,3 +15,5 @@ exclude =
 
 per-file-ignores =
     __init__.py:F401
+    tests/three_es/*.py:E402,E712,F841
+    scripts/three_es_examples.py:E402

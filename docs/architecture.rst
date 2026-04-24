@@ -37,11 +37,12 @@ Visualization Layer
 - **Network Visualization**: Interactive network graphs
 - **Dashboards**: Executive summaries and health metrics
 
-API Layer
-~~~~~~~~~
+Integration
+~~~~~~~~~~~
 
-- **REST API**: Flask-based API for programmatic access
-- **Web Interface**: Interactive dashboards
+- **Python library**: Use ``OrganizationalNetworkAnalyzer`` and submodules directly in notebooks, pipelines, or your own services.
+- **Enterprise APIs**: Optional Slack / Microsoft Graph HTTP clients under ``orgnet.integrations`` (you supply OAuth tokens).
+- **AuthZ / tenancy**: ``orgnet.auth`` (roles and permissions) and ``orgnet.tenancy`` (tenant-scoped DataFrames).
 
 For detailed architecture documentation, see `ARCHITECTURE.md <https://github.com/kylejones200/orgnet/blob/main/ARCHITECTURE.md>`_.
 

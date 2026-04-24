@@ -83,11 +83,6 @@ class Config:
         return self.get("privacy", {})
 
     @property
-    def api_config(self) -> Dict[str, Any]:
-        """Get API configuration."""
-        return self.get("api", {})
-
-    @property
     def config_dict(self) -> Dict[str, Any]:
         """Get full configuration dictionary."""
         return self._config

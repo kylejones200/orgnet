@@ -83,6 +83,9 @@ models/
 # WIP folder
 wip/
 
+# Accidental nested NetSmith clone (use sibling repo or NETSMITH_ROOT instead)
+netsmith/
+
 # Cursor IDE
 .cursor/
 

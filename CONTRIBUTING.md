@@ -18,8 +18,7 @@ Thank you for your interest in contributing to orgnet! This document provides gu
 
 3. **Install dependencies**
    ```bash
-   pip install -r requirements.txt
-   pip install -e .  # Install in development mode
+   uv sync --all-extras   # from uv.lock; or: pip install -e ".[all]"
    ```
 
 4. **Install pre-commit hooks** (optional but recommended)

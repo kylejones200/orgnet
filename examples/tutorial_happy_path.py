@@ -192,21 +192,6 @@ def run_tutorial():
     except Exception as e:
         logger.warning(f"Visualization not available: {e}")
 
-    # Step 8: Generate dashboard
-    logger.info("\n[Step 8] Generating dashboard...")
-    try:
-        from orgnet.visualization.dashboard_html import generate_dashboard_html
-
-        output_dir = os.path.dirname(__file__)
-        dashboard_path = generate_dashboard_html(
-            api_base_url="http://localhost:5000",
-            output_path=os.path.join(output_dir, "tutorial_dashboard.html"),
-        )
-        logger.info(f"✓ Dashboard generated: {dashboard_path}")
-        logger.info("  Dashboard includes: global overview, team view, and people view")
-    except Exception as e:
-        logger.warning(f"Dashboard generation: {e}")
-
     # Summary
     logger.info("\n" + "=" * 60)
     logger.info("TUTORIAL COMPLETE!")
@@ -219,13 +204,11 @@ def run_tutorial():
     logger.info(
         f"  - {os.path.join(output_dir, 'tutorial_network.html')} (interactive network map)"
     )
-    logger.info(f"  - {os.path.join(output_dir, 'tutorial_dashboard.html')} (lean dashboard)")
     logger.info("\nNext steps:")
     logger.info("  1. Open tutorial_report.html in a web browser")
     logger.info("  2. Review the network map, centrality tables, and insights")
-    logger.info("  3. Explore the dashboard views")
     logger.info(
-        f"  4. Try with your own data by replacing {os.path.join(output_dir, 'tutorial_data')}/*.csv files"
+        f"  3. Try with your own data by replacing {os.path.join(output_dir, 'tutorial_data')}/*.csv files"
     )
 
 

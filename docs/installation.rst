@@ -61,16 +61,7 @@ Visualization
 
    pip install orgnet[viz]
 
-Includes: Matplotlib, Seaborn, Plotly, Pyvis, Dash
-
-API
-^^^
-
-.. code-block:: bash
-
-   pip install orgnet[api]
-
-Includes: Flask, Flask-CORS
+Includes: Matplotlib, Seaborn, PlotSmith (Python 3.12+), and Pyvis. Plotly is not used.
 
 Temporal Analysis
 ^^^^^^^^^^^^^^^^^
@@ -80,6 +71,21 @@ Temporal Analysis
    pip install orgnet[temporal]
 
 Includes: Ruptures
+
+Enterprise clients (Slack, Microsoft Graph)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+No extra PyPI packages are required (stdlib HTTP). Install the core package, then use
+``orgnet.integrations`` with tokens from your Slack app or Entra ID app registration.
+
+Authentication helpers (JWT)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: bash
+
+   pip install orgnet[auth]
+
+Includes: PyJWT for :func:`orgnet.auth.tokens.decode_jwt_unverified` (use verified decoding in production).
 
 Development
 ^^^^^^^^^^^

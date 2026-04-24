@@ -125,11 +125,6 @@ This document describes the architecture and design of the Organizational Networ
 - **`network.py`**: Network visualizations (matplotlib, Pyvis)
 - **`dashboards.py`**: Dashboard generation and executive summaries
 
-### `orgnet.api`
-**Purpose**: Web API interface
-
-- **`app.py`**: Flask API with REST endpoints
-
 ### `orgnet.core`
 **Purpose**: Main orchestrator
 
@@ -168,7 +163,6 @@ This document describes the architecture and design of the Organizational Networ
 ### 5. Production-Ready
 - Error handling throughout
 - Graceful degradation for missing dependencies
-- API interface for integration
 - Comprehensive documentation
 
 ## Dependencies
@@ -194,12 +188,8 @@ This document describes the architecture and design of the Organizational Networ
 
 ### Visualization (Optional)
 - `matplotlib`: Static plots
-- `pyvis`: Interactive network visualization
-- `plotly`: Interactive charts
-
-### API (Optional)
-- `flask`: Web framework
-- `flask-cors`: CORS support
+- `plotsmith`: Styled analytical figures (time series, bars, heatmaps; Python 3.12+ on PyPI)
+- `pyvis`: Interactive network visualization (HTML / vis.js)
 
 ## Performance Considerations
 
@@ -214,15 +204,22 @@ This document describes the architecture and design of the Organizational Networ
 - Configurable retention policies
 - Aggregation before analysis
 - Anonymization support
-- Access control via API authentication (to be implemented)
+- Access control via :mod:`orgnet.auth` (roles, permissions) and optional JWT helpers
+
+## Platform extensions (library)
+
+These roadmap items are implemented as **optional building blocks** (you wire tokens, tenants, and deployment):
+
+- **Advanced GNNs**: :class:`orgnet.ml.gnn.OrgGraphSAGE`, :class:`orgnet.ml.gnn.OrgGATv2`, and :func:`orgnet.ml.gnn.build_org_gnn` (requires ``torch`` / ``torch-geometric``).
+- **Visualization**: extra layouts and Pyvis physics presets via :mod:`orgnet.visualization.layouts` and parameters on :class:`orgnet.visualization.network.NetworkVisualizer`.
+- **Enterprise HTTP clients**: :class:`orgnet.integrations.slack.SlackWebClient`, :class:`orgnet.integrations.microsoft_graph.MicrosoftGraphClient` (stdlib HTTP; you supply tokens from your IdP / app registration).
+- **AuthZ**: :mod:`orgnet.auth` — :class:`orgnet.auth.context.AuthContext`, role→permission map, :func:`orgnet.auth.rbac.require_permission`; :func:`orgnet.auth.tokens.decode_jwt_unverified` when ``orgnet[auth]`` (PyJWT) is installed.
+- **Multi-tenant scoping**: :mod:`orgnet.tenancy` — :func:`orgnet.tenancy.context.tenant_scope`, :func:`orgnet.tenancy.filters.filter_dataframe_for_tenant`.
 
 ## Future Enhancements
 
 - Real-time data streaming
 - Database backend for large-scale deployments
-- Advanced GNN models
-- More visualization options
-- Integration with common enterprise tools (Slack API, Microsoft Graph, etc.)
-- User authentication and authorization
-- Multi-tenant support
+- MSAL / OAuth device-code flows built on top of the Graph client
+- Deeper RBAC policies (ABAC, attribute rules)
 
