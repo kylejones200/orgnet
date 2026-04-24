@@ -24,7 +24,7 @@ import pytest
 from datetime import datetime, timedelta, timezone
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from orgnet.three_es.database.models import Base, Team, TeamMember, Communication
+from orgnet.three_es.database.models import Base
 from orgnet.three_es.data_access.repositories import (
     TeamRepository,
     TeamMemberRepository,

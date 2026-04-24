@@ -8,7 +8,7 @@ Pure math lives in netsmith.ona — this layer owns ORM access and persistence.
 
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import networkx as nx
 import numpy as np
@@ -19,7 +19,7 @@ from netsmith.api.compute import degree as ns_degree
 from netsmith.api.compute import pagerank as ns_pagerank
 from netsmith.engine.contracts import EdgeList
 from netsmith.ona import Communication as NsComm
-from netsmith.ona import detect_silos, score_team
+from netsmith.ona import score_team
 from netsmith.ona.three_es import gini_coefficient
 
 from ..data_access.repositories import (
@@ -28,7 +28,7 @@ from ..data_access.repositories import (
     TeamMetricsRepository,
     TeamRepository,
 )
-from ..database.models import Communication, Team, TeamMember
+from ..database.models import Communication
 from .netsmith_graph_helpers import (
     closeness_centrality_wf,
     edge_pairs_uint64_from_el,

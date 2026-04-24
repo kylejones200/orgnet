@@ -7,7 +7,7 @@ Abstracts database queries and provides a clean interface for the business logic
 
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_, or_
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import List, Optional, Dict
 from ..database.models import Team, TeamMember, Communication, TeamMetrics, ExternalTeam
 

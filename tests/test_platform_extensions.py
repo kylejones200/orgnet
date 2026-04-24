@@ -1,9 +1,10 @@
 """Tests for GNN factory, auth/RBAC, tenancy, enterprise clients, and layouts."""
 
+import networkx as nx
 import pandas as pd
 import pytest
-import networkx as nx
 
+from orgnet.ml import gnn as gnn_module
 from orgnet.auth import (
     AuthContext,
     AuthorizationError,
@@ -97,8 +98,6 @@ def test_graph_client_me_mock(monkeypatch):
     me = g.me()
     assert me["displayName"] == "Test"
 
-
-from orgnet.ml import gnn as gnn_module
 
 HAS_TORCH_RUNTIME = gnn_module.HAS_TORCH
 

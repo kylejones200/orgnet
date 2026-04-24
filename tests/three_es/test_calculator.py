@@ -3,7 +3,7 @@ Comprehensive tests for ThreeEsCalculator.
 """
 
 import pytest
-from datetime import datetime, timedelta, timezone
+
 from orgnet.three_es.business_logic import ThreeEsCalculator
 
 

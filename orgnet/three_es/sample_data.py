@@ -9,7 +9,7 @@ import random
 from typing import Dict
 from sqlalchemy.orm import Session
 
-from .database.models import Team, TeamMember, Communication
+from .database.models import Team, Communication
 from .data_access.repositories import TeamRepository, TeamMemberRepository, CommunicationRepository
 
 
