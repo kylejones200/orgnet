@@ -4,16 +4,16 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "orgnet"
-version = "0.1.2"
+version = "0.2.0"
 description = "Organizational Network Analysis Platform using ML and Graph Analytics"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [
-    {name = "Kyle Jones"}
+    {name = "Kyle Jones", email = "kyletjones@gmail.com"}
 ]
 maintainers = [
-    {name = "Kyle Jones"}
+    {name = "Kyle Jones", email = "kyletjones@gmail.com"}
 ]
 keywords = [
     "organizational-network-analysis",
@@ -34,6 +34,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Operating System :: OS Independent",
 ]
 dependencies = [
@@ -81,7 +82,7 @@ three-es = [
     "SQLAlchemy>=2.0.23",
     "alembic>=1.13.1",
     "python-dotenv>=1.0.0",
-    "anomsmith @ git+https://github.com/kylejones200/anomsmith.git@main",
+    "anomsmith>=0.0.2",
 ]
 three-es-viz = [
     "plotsmith>=0.2.0; python_version>='3.12'",
@@ -99,7 +100,7 @@ docs = [
     "myst-parser>=1.0.0",
 ]
 all = [
-    "orgnet[graph,ml,nlp,viz,temporal,three-es,export,stats,mlops,data,examples,auth]",
+    "orgnet[graph,ml,nlp,viz,temporal,three-es,export,stats,mlops,data,examples,auth,email]",
 ]
 export = [
     "openpyxl>=3.1.0",
@@ -125,6 +126,14 @@ examples = [
 auth = [
     "PyJWT>=2.8.0",
 ]
+# Full email corpus pipeline (embeddings, UMAP, HDBSCAN, FAISS, validators).
+email = [
+    "sentence-transformers>=2.2.0",
+    "umap-learn>=0.5.4",
+    "hdbscan>=0.8.33",
+    "faiss-cpu>=1.7.4",
+    "email-validator>=2.0.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/kylejones200/orgnet"
@@ -137,11 +146,11 @@ where = ["."]
 include = ["orgnet*"]
 
 [tool.setuptools.package-data]
-orgnet = ["py.typed"]
+orgnet = ["py.typed", "config.yaml"]
 
 [tool.black]
 line-length = 100
-target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
+target-version = ['py311', 'py312', 'py313']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
