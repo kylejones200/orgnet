@@ -12,6 +12,9 @@ permissions:
   id-token: write  # Required for OIDC/trusted publishing
   contents: read   # Required for checking out code
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build-and-publish:
     name: Build and publish to PyPI
